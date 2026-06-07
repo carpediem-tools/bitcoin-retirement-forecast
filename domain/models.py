@@ -11,6 +11,20 @@ from datetime import date
 
 
 @dataclass(frozen=True)
+class MonthlyClose:
+    """One closed calendar month (Synchro v1.3 §3.1) — Aggregation input.
+
+    ``month`` is the first day of the closed month (calendar arithmetic stays in
+    the domain, the 'YYYY-MM' string lives at the storage boundary). ``real`` and
+    ``interpolated`` are equivalent for aggregation (Agrégation §3.1).
+    """
+
+    month: date
+    price: float          # USD close (IEEE-754 double)
+    origin: str           # 'real' | 'interpolated'
+
+
+@dataclass(frozen=True)
 class AnnualHistoryPoint:
     """One historical year (2009 .. anchor) — Aggregation v1.3 additive series."""
 
