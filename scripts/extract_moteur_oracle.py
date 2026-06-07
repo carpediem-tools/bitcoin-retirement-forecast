@@ -33,7 +33,11 @@ DEFAULT_SOURCE = PROJECT_ROOT / "tests" / "oracle_sources" / "forecast_bear_fina
 DEFAULT_OUTPUT = PROJECT_ROOT / "tests" / "fixtures" / "moteur_pointfixe.json"
 
 # Fixed injection (the pilot's own inputs, re-injected as scalars) — §2.1.
-INJECTION = {"anchor_year": 2025, "anchor_price": 101700, "mm_anchor": 0.3613}
+# mm_anchor is the pilot's FULL-PRECISION MM4 anchor (Forecast Bear!C12 /
+# _Export!R1C17). The documented "0.3613" (CLAUDE.md, spec) is a 4-decimal
+# display rounding — using it breaks the 1e-9 gate on the blend years
+# (2026..2030, the only place mm_anchor enters). Keep full precision here.
+INJECTION = {"anchor_year": 2025, "anchor_price": 101700, "mm_anchor": 0.361334851227728}
 
 # Spreadsheet geometry (1-based rows, 0-based grid columns).
 COL_ARR = 10          # column K

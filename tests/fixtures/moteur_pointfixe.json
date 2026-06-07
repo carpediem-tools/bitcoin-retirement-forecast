@@ -2,7 +2,7 @@
   "injection": {
     "anchor_year": 2025,
     "anchor_price": 101700,
-    "mm_anchor": 0.3613
+    "mm_anchor": 0.361334851227728
   },
   "oracle": [
     {
