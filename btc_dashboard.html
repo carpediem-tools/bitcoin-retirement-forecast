@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>₿ Bitcoin Retirement · Bear Forecast</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C9A84C;--gold-dim:#7A6228;--gold-pale:#F5E49A;
+  --amber:#E8943A;--green:#5DBF8A;--red:#E05C5C;
+  --bg:#080808;--bg2:#0E0E0E;--bg3:#141414;--bg4:#1A1A1A;
+  --white:#F0EDE8;--grey:#777;--grey2:#444;--grey3:#222;
+}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif}
+body{overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");opacity:.5}
+.page{max-width:1440px;margin:0 auto;padding:2rem 2.5rem}
+
+/* IMPORT */
+#importScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:2rem}
+.import-logo{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--gold);letter-spacing:8px;line-height:1;text-align:center}
+.import-sub{font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--grey);text-align:center}
+.drop-zone{border:1px dashed var(--gold-dim);padding:3rem 5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg2)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--gold);background:var(--bg3)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone p{color:var(--grey);font-size:.85rem;margin-top:.5rem}
+.drop-icon{font-size:2.5rem;color:var(--gold-dim);margin-bottom:.75rem}
+.import-hint{font-size:.72rem;color:var(--grey2);letter-spacing:1px;text-align:center;max-width:420px;line-height:1.8}
+.btn-demo{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.6rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:.8rem;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all .2s}
+.btn-demo:hover{border-color:var(--gold-dim);color:var(--gold-pale)}
+.err-msg{color:var(--red);font-size:.8rem;letter-spacing:1px;display:none}
+
+/* DASHBOARD */
+#dashboard{display:none}
+header{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-bottom:1px solid var(--grey3);margin-bottom:2rem}
+.hdr-left{display:flex;align-items:center;gap:1.25rem}
+.btc-circle{width:46px;height:46px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold-pale)}
+.hdr-title h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;color:var(--gold);line-height:1}
+.hdr-title p{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-top:.1rem}
+.hdr-right{text-align:right}
+.hdr-right span{display:block;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--grey)}
+.hdr-right strong{font-size:.9rem;color:var(--gold-pale)}
+.btn-reload{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.4rem 1rem;font-size:.7rem;letter-spacing:1px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;text-transform:uppercase;margin-top:.5rem}
+.btn-reload:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem}
+.kpi{background:var(--bg2);border:1px solid var(--grey3);padding:1.1rem 1.25rem;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grey3)}
+.kpi.gold::after{background:var(--gold)}.kpi.amber::after{background:var(--amber)}
+.kpi.green::after{background:var(--green)}.kpi.red::after{background:var(--red)}
+.kpi label{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--grey);display:block;margin-bottom:.4rem}
+.kpi .v{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;line-height:1}
+.kpi .v.gold{color:var(--gold)}.kpi .v.amber{color:var(--amber)}
+.kpi .v.green{color:var(--green)}.kpi .v.red{color:var(--red)}.kpi .v.white{color:var(--white)}
+.kpi small{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--grey);display:block;margin-top:.25rem}
+
+/* PARAMS BAR */
+.params-bar{background:var(--bg2);border:1px solid var(--grey3);padding:1rem 1.5rem;margin-bottom:2rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center}
+.params-bar h3{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);white-space:nowrap}
+.param-item{display:flex;flex-direction:column;gap:.15rem}
+.param-item label{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--grey)}
+.param-item span{font-family:'DM Mono',monospace;font-size:.85rem;color:var(--amber);font-weight:500}
+.param-sep{width:1px;background:var(--grey3);align-self:stretch}
+
+/* CHARTS */
+.charts-main{display:grid;grid-template-columns:3fr 2fr;gap:1.5rem;margin-bottom:1.5rem}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem}
+.card{background:var(--bg2);border:1px solid var(--grey3);padding:1.25rem 1.5rem}
+.card h3{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--gold-dim);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+.card h3 span{font-size:.6rem;font-family:'DM Mono',monospace;color:var(--grey);letter-spacing:1px;font-weight:400}
+.chart-legend{display:flex;gap:1.25rem;margin-bottom:.75rem;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:.4rem;font-size:.65rem;color:var(--grey)}
+.leg-dot{width:8px;height:8px;border-radius:2px;display:inline-block}
+.leg-dash{width:16px;height:0;border-top:2px dashed;display:inline-block}
+
+/* TABLE */
+.table-card{background:var(--bg2);border:1px solid var(--grey3);margin-bottom:2rem}
+.table-hdr{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.5rem;border-bottom:1px solid var(--grey3)}
+.table-hdr h3{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:2px;color:var(--gold-dim)}
+.table-filter{display:flex;gap:.5rem}
+.filter-btn{background:transparent;border:1px solid var(--grey3);color:var(--grey);padding:.3rem .75rem;font-size:.65rem;letter-spacing:1px;cursor:pointer;font-family:'DM Sans',sans-serif;text-transform:uppercase;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{border-color:var(--gold-dim);color:var(--gold)}
+.tbl-wrap{overflow-x:auto;max-height:420px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.72rem;white-space:nowrap}
+th{background:var(--bg4);color:var(--grey);text-transform:uppercase;letter-spacing:1px;padding:.6rem 1rem;text-align:right;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--gold-dim);font-size:.62rem}
+th:first-child{text-align:left}
+td{padding:.45rem 1rem;text-align:right;border-bottom:1px solid var(--grey3);color:var(--grey)}
+td:first-child{text-align:left;color:var(--white)}
+tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+tr.tr-curr td{background:rgba(201,168,76,.08)!important;color:var(--gold-pale)!important}
+tr.tr-curr td:first-child{color:var(--gold)!important;font-weight:500}
+.pos{color:var(--green)!important}.neg{color:var(--red)!important}.dim{color:var(--grey2)!important}
+.tag{font-size:.55rem;opacity:.4;margin-left:.3rem}
+footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-content:space-between;font-size:.65rem;color:var(--grey);letter-spacing:.5px}
+</style>
+</head>
+<body>
+
+<div id="importScreen">
+  <div>
+    <div class="import-logo">₿</div>
+    <div class="import-sub">Bitcoin Retirement · Bear Forecast Dashboard</div>
+  </div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".ods,.xlsx,.xls">
+    <div class="drop-icon">↓</div>
+    <strong style="color:var(--white);font-size:.9rem">Charger le fichier forecast</strong>
+    <p>Glisser-déposer ou cliquer · ODS / XLSX</p>
+  </div>
+  <div class="import-hint">
+    Charger <strong style="color:var(--gold-pale)">forecast_bear_final.ods</strong><br>
+    Le dashboard lit automatiquement la feuille <code style="color:var(--amber)">_Export</code><br>
+    Données traitées localement — rien n'est envoyé.
+  </div>
+  <div class="err-msg" id="errMsg">⚠ Feuille _Export introuvable. Vérifier le fichier.</div>
+  <button class="btn-demo" onclick="loadDemo()">Voir avec données de démonstration ↗</button>
+</div>
+
+<div id="dashboard">
+<div class="page">
+<header>
+  <div class="hdr-left">
+    <div class="btc-circle">₿</div>
+    <div class="hdr-title">
+      <h1>Bitcoin Retirement Forecast</h1>
+      <p>Bear Scenario · Power Law · MM4 Dynamic · Sigmoïde</p>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <span>Fichier chargé</span>
+    <strong id="fileName">—</strong>
+    <button class="btn-reload" onclick="resetDashboard()">↩ Changer de fichier</button>
+  </div>
+</header>
+
+<div class="kpi-grid">
+  <div class="kpi gold"><label>ARR Théorique 2026</label><div class="v gold" id="k-arr">—</div><small>Bear modéré · PL −40%</small></div>
+  <div class="kpi amber"><label>MM4 auto</label><div class="v amber" id="k-mm4">—</div><small>Moyenne mobile 4 ans</small></div>
+  <div class="kpi"><label>Prix BTC 2025</label><div class="v white" id="k-prix">—</div><small>Référence nominale</small></div>
+  <div class="kpi green"><label>Stack actuel</label><div class="v green" id="k-stack">—</div><small>BTC en portefeuille</small></div>
+  <div class="kpi" id="kpi-runway"><label>Runway estimé</label><div class="v white" id="k-runway">—</div><small>Avant épuisement</small></div>
+</div>
+
+<div class="params-bar">
+  <h3>Paramètres</h3>
+  <div class="param-item"><label>Année en cours</label><span id="p-year">—</span></div>
+  <div class="param-sep"></div>
+  <div class="param-item"><label>Dépenses / mois</label><span id="p-spend">—</span></div>
+  <div class="param-item"><label>Inflation</label><span id="p-inf">—</span></div>
+  <div class="param-item"><label>Train de vie</label><span id="p-life">—</span></div>
+  <div class="param-sep"></div>
+  <div class="param-item"><label>Plateau ARR</label><span id="p-plat">—</span></div>
+  <div class="param-item"><label>Année plateau</label><span id="p-plat-yr">—</span></div>
+  <div class="param-sep"></div>
+  <div class="param-item"><label>Portfolio actuel</label><span id="p-port">—</span></div>
+</div>
+
+<div class="charts-main">
+  <div class="card">
+    <h3>Prix BTC <span>NOMINAL & RÉEL (LOG)</span></h3>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#C9A84C"></div>Nominal</div>
+      <div class="leg-item"><div class="leg-dash" style="border-color:#555"></div>Réel base 2025</div>
+    </div>
+    <div style="position:relative;height:300px"><canvas id="cPrice" role="img" aria-label="Prix Bitcoin nominal et réel"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Stack BTC & Portfolio <span>2026–2072</span></h3>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#C9A84C"></div>Stack BTC</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#5DBF8A"></div>Portfolio $</div>
+    </div>
+    <div style="position:relative;height:300px"><canvas id="cStack" role="img" aria-label="Stack et portfolio"></canvas></div>
+  </div>
+</div>
+
+<div class="chart-row">
+  <div class="card">
+    <h3>ARR Théorique <span>DÉCROISSANCE BEAR</span></h3>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>ARR théo.</div>
+      <div class="leg-item"><div class="leg-dash" style="border-color:#7A6228"></div>Plateau</div>
+    </div>
+    <div style="position:relative;height:220px"><canvas id="cArr" role="img" aria-label="ARR théorique"></canvas></div>
+  </div>
+  <div class="card">
+    <h3>Coût de vie <span>INFLATION VS TRAIN DE VIE</span></h3>
+    <div class="chart-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:#555"></div>Inflation</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>Train de vie</div>
+    </div>
+    <div style="position:relative;height:220px"><canvas id="cCost" role="img" aria-label="Coût de vie"></canvas></div>
+  </div>
+</div>
+
+<div class="table-card">
+  <div class="table-hdr">
+    <h3>Données complètes 2009 — 2072</h3>
+    <div class="table-filter">
+      <button class="filter-btn active" onclick="filterTable('all',this)">Tout</button>
+      <button class="filter-btn" onclick="filterTable('hist',this)">Historique</button>
+      <button class="filter-btn" onclick="filterTable('proj',this)">Projection</button>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Année</th><th>N</th><th>ARR Réel</th><th>ARR Théo.</th>
+        <th>BTC Nominal</th><th>BTC Réel</th>
+        <th>Coût vie inf.</th><th>Coût vie train</th>
+        <th>Dép. BTC</th><th>Stack BTC</th><th>Portfolio</th>
+      </tr></thead>
+      <tbody id="tBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <span>Bear Scenario · Power Law 5.7675 · MM4 Dynamic · Sigmoïde plateau</span>
+  <span id="foot-date"></span>
+</footer>
+</div>
+</div>
+
+<script>
+let charts={}, allRows=[];
+
+// DRAG & DROP
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
+document.getElementById('fileInput').addEventListener('change',e=>handleFile(e.target.files[0]));
+
+function handleFile(file){
+  if(!file) return;
+  document.getElementById('errMsg').style.display='none';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:false});
+      // Chercher la feuille _Export
+      const expSheet=wb.Sheets['_Export'];
+      if(!expSheet){
+        document.getElementById('errMsg').style.display='block';
+        return;
+      }
+      const data=XLSX.utils.sheet_to_json(expSheet,{header:1,defval:null,raw:true});
+      document.getElementById('fileName').textContent=file.name;
+      buildDashboard(data);
+    }catch(err){
+      document.getElementById('errMsg').style.display='block';
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Lecture feuille _Export
+// Row 0 (index) = params : clé col 0,2,4... val col 1,3,5...
+// Row 2 = headers colonnes
+// Rows 3-19 = historique 2009-2025
+// Row 20 = séparateur
+// Rows 21-67 = projection 2026-2072
+
+function parseExport(data){
+  // Paramètres : row 0
+  const params={};
+  const row0=data[0]||[];
+  for(let i=0;i<row0.length-1;i+=2){
+    const key=row0[i], val=row0[i+1];
+    if(key && val!=null) params[key]=typeof val==='string'?val:Number(val);
+  }
+
+  // Historique : rows 3-19 (index 3 to 19)
+  const hist=[];
+  for(let i=3;i<=19;i++){
+    const r=data[i]||[];
+    const year=num(r[0]);
+    if(!year) continue;
+    hist.push({year,n:num(r[1]),arrReal:num(r[2]),arrTheo:num(r[3]),
+               pricenom:num(r[4]),pricereal:num(r[5]),
+               cdvInf:num(r[6]),cdvTrain:num(r[7]),
+               depBTC:num(r[8]),stack:num(r[9]),portfolio:num(r[10])});
+  }
+
+  // Projection : rows 21-67 (index 21 to 67)
+  const proj=[];
+  for(let i=21;i<=67;i++){
+    const r=data[i]||[];
+    const year=num(r[0]);
+    if(!year||year<2026) continue;
+    proj.push({year,n:num(r[1]),arrReal:num(r[2]),arrTheo:num(r[3]),
+               pricenom:num(r[4]),pricereal:num(r[5]),
+               cdvInf:num(r[6]),cdvTrain:num(r[7]),
+               depBTC:num(r[8]),stack:num(r[9]),portfolio:num(r[10])});
+  }
+
+  return{params,hist,proj};
+}
+
+function num(v){if(v==null||v===''||v==='nan') return null; const n=Number(v); return isNaN(n)?null:n;}
+function fmt$(v){return v!=null?'$'+Math.round(v).toLocaleString('fr-FR'):'—'}
+function fmtp(v){return v!=null?(v*100).toFixed(2)+'%':'—'}
+function fmtb(v){return v!=null?v.toFixed(4):'—'}
+
+function buildDashboard(data){
+  const {params,hist,proj}=parseExport(data);
+  if(!params.mm4 && proj.length===0){
+    document.getElementById('errMsg').style.display='block'; return;
+  }
+
+  // Runway
+  const runIdx=proj.findIndex(r=>r.stack!=null&&r.stack<0);
+  const runway=runIdx>=0?proj[runIdx].year-2025+' ans':'∞';
+
+  // KPIs
+  const arr2026=proj[0]?.arrTheo;
+  document.getElementById('k-arr').textContent=fmtp(arr2026);
+  document.getElementById('k-mm4').textContent=fmtp(params.mm4);
+  document.getElementById('k-prix').textContent=fmt$(params.prix_ref_2025);
+  document.getElementById('k-stack').textContent=params.stack_btc?.toFixed(4)+' BTC';
+  document.getElementById('k-runway').textContent=runway;
+  const kr=document.getElementById('kpi-runway');
+  const rc=runIdx<0?'green':runIdx<10?'amber':'red';
+  kr.className='kpi '+rc;
+  document.getElementById('k-runway').className='v '+rc;
+
+  // Params bar
+  document.getElementById('p-year').textContent=params.année_en_cours||'—';
+  document.getElementById('p-spend').textContent=params.depenses_mois?'$'+params.depenses_mois.toLocaleString('fr-FR'):'—';
+  document.getElementById('p-inf').textContent=fmtp(params.inflation);
+  document.getElementById('p-life').textContent=fmtp(params.train_de_vie);
+  document.getElementById('p-plat').textContent=fmtp(params.plateau_arr);
+  document.getElementById('p-plat-yr').textContent=params.annee_plateau||'—';
+  document.getElementById('p-port').textContent=fmt$(params.portfolio_actuel);
+
+  buildCharts(hist,proj,params);
+  buildTable(hist,proj);
+
+  document.getElementById('foot-date').textContent='Chargé le '+new Date().toLocaleDateString('fr-FR');
+  document.getElementById('importScreen').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+}
+
+function buildCharts(hist,proj,params){
+  Object.values(charts).forEach(c=>c&&c.destroy&&c.destroy());
+  charts={};
+
+  const projY=proj.map(r=>r.year);
+  const allY=[...hist.map(r=>r.year),...projY];
+  const allNom=[...hist.map(r=>r.pricenom),...proj.map(r=>r.pricenom)];
+  const allReal=[...hist.map(r=>r.pricereal),...proj.map(r=>r.pricereal)];
+  const plateau=params.plateau_arr||0.03;
+
+  const co={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+      backgroundColor:'rgba(14,14,14,.95)',borderColor:'#333',borderWidth:1,
+      titleColor:'#C9A84C',bodyColor:'#888',
+      titleFont:{family:'DM Mono',size:11},bodyFont:{family:'DM Mono',size:10}}},
+    scales:{}};
+
+  // PRIX
+  charts.price=new Chart(document.getElementById('cPrice'),{type:'line',
+    data:{labels:allY,datasets:[
+      {label:'Nominal',data:allNom,borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.2},
+      {label:'Réel',data:allReal,borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.2,borderDash:[5,4]},
+    ]},
+    options:{...co,scales:{
+      x:{ticks:{maxTicksLimit:12,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{type:'logarithmic',ticks:{color:'#555',font:{size:10},
+           callback:v=>v>=1e6?'$'+(v/1e6).toFixed(0)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},
+         grid:{color:'rgba(255,255,255,.04)'}}
+    }}
+  });
+
+  // STACK
+  charts.stack=new Chart(document.getElementById('cStack'),{type:'line',
+    data:{labels:projY,datasets:[
+      {label:'Stack BTC',data:proj.map(r=>r.stack),borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.3,yAxisID:'yB'},
+      {label:'Portfolio',data:proj.map(r=>r.portfolio!=null?Math.max(0,r.portfolio):null),borderColor:'#5DBF8A',pointRadius:0,borderWidth:1.5,fill:true,backgroundColor:'rgba(93,191,138,.05)',tension:0.3,yAxisID:'yU',borderDash:[3,3]},
+    ]},
+    options:{...co,scales:{
+      yB:{position:'left',ticks:{color:'#C9A84C',font:{size:10},callback:v=>v.toFixed(2)+'₿'},grid:{color:'rgba(255,255,255,.04)'}},
+      yU:{position:'right',ticks:{color:'#5DBF8A',font:{size:10},callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},grid:{display:false}},
+      x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}
+    }}
+  });
+
+  // ARR
+  charts.arr=new Chart(document.getElementById('cArr'),{type:'line',
+    data:{labels:projY,datasets:[
+      {label:'ARR',data:proj.map(r=>r.arrTheo!=null?+(r.arrTheo*100).toFixed(2):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.06)',tension:0.4},
+      {label:'Plateau',data:projY.map(()=>+(plateau*100).toFixed(1)),borderColor:'#7A6228',borderWidth:1,pointRadius:0,borderDash:[5,4],fill:false},
+    ]},
+    options:{...co,scales:{
+      x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{min:0,max:30,ticks:{color:'#555',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.04)'}}
+    }}
+  });
+
+  // COÛT DE VIE
+  charts.cost=new Chart(document.getElementById('cCost'),{type:'line',
+    data:{labels:projY,datasets:[
+      {label:'Inflation',data:proj.map(r=>r.cdvInf!=null?Math.round(r.cdvInf):null),borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.3},
+      {label:'Train de vie',data:proj.map(r=>r.cdvTrain!=null?Math.round(r.cdvTrain):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.05)',tension:0.3},
+    ]},
+    options:{...co,scales:{
+      x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+      y:{ticks:{color:'#555',font:{size:10},callback:v=>v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},grid:{color:'rgba(255,255,255,.04)'}}
+    }}
+  });
+}
+
+function buildTable(hist,proj){
+  allRows=[];
+  const tbody=document.getElementById('tBody');
+  tbody.innerHTML='';
+
+  hist.forEach(r=>{
+    if(r.year<2010) return;
+    const tr=document.createElement('tr');
+    tr.dataset.type='hist';
+    if(r.year===2025) tr.className='tr-curr';
+    tr.innerHTML=`<td>${r.year}<span class="tag">●</span></td>
+      <td class="dim">${r.n??'—'}</td>
+      <td class="${r.arrReal!=null?(r.arrReal>0?'pos':'neg'):''}">${fmtp(r.arrReal)}</td>
+      <td class="dim">—</td>
+      <td>${fmt$(r.pricenom)}</td><td class="dim">${fmt$(r.pricereal)}</td>
+      <td class="dim">—</td><td class="dim">—</td>
+      <td class="dim">—</td><td class="dim">—</td><td class="dim">—</td>`;
+    tbody.appendChild(tr); allRows.push(tr);
+  });
+
+  proj.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.dataset.type='proj';
+    const pos=r.stack==null||r.stack>=0;
+    tr.innerHTML=`<td>${r.year}<span class="tag">▸</span></td>
+      <td class="dim">+${r.n}</td>
+      <td class="dim">—</td>
+      <td class="dim">${fmtp(r.arrTheo)}</td>
+      <td>${fmt$(r.pricenom)}</td><td class="dim">${fmt$(r.pricereal)}</td>
+      <td class="dim">${fmt$(r.cdvInf)}</td>
+      <td>${fmt$(r.cdvTrain)}</td>
+      <td class="dim">${fmtb(r.depBTC)}</td>
+      <td class="${pos?'pos':'neg'}">${fmtb(r.stack)}</td>
+      <td class="${pos?'':'neg'}">${fmt$(r.portfolio)}</td>`;
+    tbody.appendChild(tr); allRows.push(tr);
+  });
+}
+
+function filterTable(type,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  allRows.forEach(tr=>tr.style.display=(type==='all'||tr.dataset.type===type)?'':'none');
+}
+
+function resetDashboard(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('importScreen').style.display='flex';
+  document.getElementById('fileInput').value='';
+}
+
+function loadDemo(){
+  // Génère des données de démo sans fichier
+  const data=[];
+  // Row 0 params
+  const r0=Array(22).fill(null);
+  r0[0]='année_en_cours';r0[1]=2026;r0[2]='stack_btc';r0[3]=1;
+  r0[4]='depenses_mois';r0[5]=1500;r0[6]='prix_ref_2025';r0[7]=101700;
+  r0[8]='inflation';r0[9]=0.05;r0[10]='plateau_arr';r0[11]=0.03;
+  r0[12]='train_de_vie';r0[13]=0.05;r0[14]='annee_plateau';r0[15]=2055;
+  r0[16]='mm4';r0[17]=0.3613;r0[18]='runway';r0[19]='10 ans';
+  r0[20]='portfolio_actuel';r0[21]=101700;
+  data.push(r0);
+  data.push(Array(11).fill(null)); // row 1
+  data.push(['année','n','arr_reel','arr_theo','prix_nominal','prix_reel','cdv_inflation','cdv_train','dep_btc','stack_btc','portfolio']); // row 2
+
+  const ph=[0,0.14,5.85,8.36,192.65,527.24,272.45,568.49,3983,7572.91,7395.25,11116.38,47436.93,28197.88,28859.47,65964.11,101700];
+  for(let i=0;i<17;i++){
+    const y=2009+i; const n=y-2025;
+    const arr=i>=2?ph[i]/ph[i-1]-1:null;
+    const real=ph[i]>0?ph[i]*Math.pow(1.03,2025-y):null;
+    data.push([y,n,arr,null,ph[i]>0?ph[i]:null,real,null,null,null,null,null]);
+  }
+  data.push(Array(11).fill('---')); // séparateur row 20
+
+  const MM4=0.3613,A=5.7675,PLAT=0.03,PY=2055,NB=6;
+  const MID=(2026+PY)/2,KS=Math.log(19)/(PY-MID);
+  let price=101700,stack=1;
+  for(let i=0;i<47;i++){
+    const y=2026+i,n=i+1,t=y-2008;
+    const pl=Math.pow(t/(t-1),A)-1;
+    const alpha=Math.max(0,1-i/NB);
+    const disc=(alpha*MM4+(1-alpha)*pl)*0.60;
+    const sig=1/(1+Math.exp(-KS*(y-MID)));
+    const arr=Math.max(disc*(1-sig)+PLAT*sig,PLAT);
+    price*=(1+arr);
+    const cdvI=(1500*12)*Math.pow(1.05,n), cdvL=(1500*12)*Math.pow(1.05,n);
+    const dep=cdvL/price; stack-=dep;
+    data.push([y,n,null,arr,price,price*Math.pow(1.05,2025-y),cdvI,cdvL,dep,stack,stack*price]);
+  }
+  document.getElementById('fileName').textContent='demo';
+  buildDashboard(data);
+}
+</script>
+</body>
+</html>

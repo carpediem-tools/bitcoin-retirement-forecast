@@ -1,0 +1,6 @@
+# Bitcoin Retirement Forecast — runtime dependencies (ST7 §1)
+Flask>=3.0,<4.0
+waitress>=3.0,<4.0
+requests>=2.31,<3.0
+pydantic>=2.6,<3.0
+python-dotenv>=1.0,<2.0

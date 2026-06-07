@@ -1,0 +1,14 @@
+# Local dev / tooling
+.dev-mode/
+.venv/
+
+# Secrets (keyless by design — a key is never required)
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local database (regenerated on first launch)
+forecast.db
