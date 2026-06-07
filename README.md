@@ -1,4 +1,4 @@
-# btc-retirement-bear
+# bitcoin-retirement-bear
 
 > Local web app modeling the viability of a Bitcoin-funded retirement under a conservative **Bear** scenario.
 > **Not financial advice. Not a price-prediction tool.**
