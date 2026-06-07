@@ -12,3 +12,6 @@ __pycache__/
 
 # Local database (regenerated on first launch)
 forecast.db
+
+# Spreadsheet oracle sources — personal data, not versioned (fixtures are)
+*.ods
