@@ -17,9 +17,13 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
 - Lancer : `python run.py` → waitress sur `127.0.0.1:8000` (**fallback bind incrémental** 8001, 8002… si occupé) → ouvre un onglet navigateur
 - Tests : `pytest tests/ -v`
 - Liaison réseau : `127.0.0.1` **uniquement**, jamais `0.0.0.0` (mono-utilisateur, pas d'auth)
+- **Seed historique** : `data/seed_monthly_closes.csv` (Coin Metrics Community Data,
+  CC license, 191 mois 2010-07→2026-05). Chargé au démarrage par
+  `storage.db.seed_from_csv()` (INSERT OR IGNORE — real figé). Régénérable :
+  `python scripts/generate_seed.py`. Attribution requise (déjà dans README).
 
 ## Architecture — couches et dépendances autorisées
-- `domain/` — **métier pur, aucune I/O ni état** : `aggregation` → `price_engine` → `flow_engine` → `pipeline` → `assemble_dto`. Testable par **composition** (moteur sur REF, flux sur Subsidy).
+- `domain/` — **métier pur, aucune I/O ni état** : `aggregation` → `price_engine` → `flow_engine` → `pipeline` → `assemble_dto`. Testable par **composition** (moteur sur REF, flux sur Subsidy). Tous les sous-modules sont des **packages** (`__init__.py`) : `price_engine/`, `aggregation/`, `flow_engine/`, `pipeline/`.
 - `domain/aggregation/` est un **package** (comme `price_engine/`), pas un module fichier-plat.
 - `domain/errors.py` : DomainError (base) + InsufficientHistoryError (code=INSUFFICIENT_HISTORY).
 - `sync/errors.py` : SyncError, SyncApiError, SyncStructError, SyncGranularityError.
@@ -47,6 +51,11 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
 - **`mm_anchor`** : MM6 en production ; MM4 (`0.361334851227728`, pleine précision pilote — pas l'arrondi `0.3613`) **uniquement** dans le vecteur de non-régression.
 - **`keyless` = mode standard nominal ≠ états `DEGRADED_*`** (échec de synchro). Ne pas câbler keyless → DEGRADED.
 - **Sérialisation `runway = ∞` → `"Infinity"`** (string JSON portable).
+- **Pydantic ValidationError → JSON 422** : toujours `exc.errors(include_context=False)`
+  — `include_context=True` (défaut) expose des `ValueError` Python non JSON-sérialisables.
+- **Champs % dans FlowParams** (`inflation_rate`, `spending_growth_rate`, `dca_growth_rate`) :
+  stockés en décimal (0.06 = 6%), convertis ×100 à l'affichage UI et ÷100 à la saisie.
+  Ne jamais stocker ni envoyer en pourcentage entier.
 - **Frontière `config/` vs `domain/` :** les **constantes d'intégrité Bear** vivent dans `domain/constants.py` (métier, module pur). `config/` porte la **config applicative** (host loopback, port, chemin db) et la **validation Pydantic des paramètres UTILISATEUR de flux** uniquement. Ne JAMAIS placer les constantes d'intégrité dans `config/` (préserve la pureté de `domain/` et l'isolation du test de non-régression). Port waitress **figé à 8000** (fallback bind incrémental conservé).
 
 ## Spécifications — source de vérité (lire à la demande dans `docs/specs/`)
