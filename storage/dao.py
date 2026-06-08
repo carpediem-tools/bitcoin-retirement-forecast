@@ -9,10 +9,26 @@ boundary type already defined in ``domain.models`` — reused here, not redefine
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import date
 
+from config.params import FlowParams
 from domain.models import MonthlyClose
+
+# Fallback profile served by ``load_raw``/used when ``forecast_params`` is empty
+# (first launch — ST7 §3.1: the table holds the single persisted profile).
+DEFAULT_PARAMS: dict = {
+    "initial_stack": 1.0,
+    "reference_price": 101700.0,
+    "monthly_expenses": 2500.0,
+    "inflation_rate": 0.06,
+    "spending_growth_rate": 0.05,
+    "btc_spending_start_year": 2035,
+    "monthly_dca": 0.0,
+    "dca_growth_rate": 0.0,
+    "dca_end_year": None,
+}
 
 
 def _row_to_monthly_close(row: sqlite3.Row) -> MonthlyClose:
@@ -101,13 +117,43 @@ class AppMetaDAO:
 
 
 class ForecastParamsDAO:
-    """Key/value access to the persisted single forecast profile."""
+    """Key/value access to the persisted single forecast profile (ST7 §3.1).
+
+    Values are JSON-encoded (``None``/``float``/``int``/``str`` all serialise
+    cleanly — ``dca_end_year = None`` is stored as the JSON literal ``null``).
+    """
 
     def __init__(self, conn: sqlite3.Connection) -> None:
         self._conn = conn
 
-    def get_all(self) -> dict[str, str]:
-        raise NotImplementedError
+    def save(self, params: FlowParams) -> None:
+        """Upsert every field of ``params`` (already validated at input)."""
+        for key, value in params.model_dump().items():
+            self._conn.execute(
+                """
+                INSERT INTO forecast_params (key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """,
+                (key, json.dumps(value)),
+            )
+        self._conn.commit()
 
-    def set_all(self, values: dict[str, str]) -> None:
-        raise NotImplementedError
+    def load(self) -> FlowParams | None:
+        """Reconstruct the persisted ``FlowParams``, or ``None`` if unset.
+
+        ``model_construct`` bypasses cross-field validation: stored values were
+        already validated at the POST /api/params boundary.
+        """
+        raw = self._load_rows()
+        return FlowParams.model_construct(**raw) if raw is not None else None
+
+    def load_raw(self) -> dict:
+        """Return the raw key/value profile, or ``DEFAULT_PARAMS`` if unset."""
+        raw = self._load_rows()
+        return raw if raw is not None else dict(DEFAULT_PARAMS)
+
+    def _load_rows(self) -> dict | None:
+        rows = self._conn.execute("SELECT key, value FROM forecast_params").fetchall()
+        if not rows:
+            return None
+        return {row["key"]: json.loads(row["value"]) for row in rows}
