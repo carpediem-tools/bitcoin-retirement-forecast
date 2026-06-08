@@ -232,7 +232,7 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
     <label>Stack BTC actuel
       <input type="number" id="f-initial_stack" step="0.0001" min="0">
     </label>
-    <label>Prix référence <span id="lbl-ref-year">2025</span> ($)
+    <label><span id="lbl-reference_price">Reference price ($)</span>
       <input type="number" id="f-reference_price" step="1" min="1">
     </label>
     <label>Dépenses / mois ($)
@@ -329,7 +329,14 @@ function buildDashboard(data){
   // KPI labels — années dynamiques (ancre / année en cours)
   document.getElementById('lbl-arr-year').textContent=data.params.current_year??'—';
   document.getElementById('lbl-prix-year').textContent=data.params.anchor_year??'—';
-  document.getElementById('lbl-ref-year').textContent=data.params.anchor_year??'—';
+
+  // Reference-price label (EN) — built from the latest monthly close (last_close_date/last_close_price)
+  const lblRefPrice=document.getElementById('lbl-reference_price');
+  if(data.params.last_close_date!=null && data.params.last_close_price!=null){
+    lblRefPrice.textContent=`Last monthly close (${data.params.last_close_date}): $${Math.round(data.params.last_close_price).toLocaleString('en-US')}`;
+  } else {
+    lblRefPrice.textContent='Reference price ($)';
+  }
 
   // KPIs
   document.getElementById('k-arr').textContent=fmtp(proj[0]?.arr_theo);

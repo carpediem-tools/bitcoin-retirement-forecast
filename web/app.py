@@ -80,7 +80,13 @@ def create_app(config: AppConfig | None = None) -> Flask:
             flow_params = FlowParams.model_construct(**raw)
             try:
                 dto = ForecastPipeline().run(closes, flow_params)
-                return jsonify(dto_to_dict(dto))
+                payload = dto_to_dict(dto)
+                # Last monthly close, exposed for the params-modal label only —
+                # NOT the engine's anchor_price (ST8 §3.1, never merge the two).
+                last_close = closes[-1]
+                payload["params"]["last_close_date"] = last_close.month.strftime("%Y-%m")
+                payload["params"]["last_close_price"] = last_close.price
+                return jsonify(payload)
             except InsufficientHistoryError as exc:
                 return jsonify({
                     "error": "INSUFFICIENT_HISTORY",

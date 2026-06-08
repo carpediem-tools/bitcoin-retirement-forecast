@@ -19,11 +19,11 @@ from domain.models import MonthlyClose
 # Fallback profile served by ``load_raw``/used when ``forecast_params`` is empty
 # (first launch — ST7 §3.1: the table holds the single persisted profile).
 DEFAULT_PARAMS: dict = {
-    "initial_stack": 1.0,
-    "reference_price": 101700.0,
-    "monthly_expenses": 2500.0,
-    "inflation_rate": 0.06,
-    "spending_growth_rate": 0.05,
+    "initial_stack": 0.0,
+    "reference_price": 0.0,
+    "monthly_expenses": 0.0,
+    "inflation_rate": 0.0,
+    "spending_growth_rate": 0.0,
     "btc_spending_start_year": 2035,
     "monthly_dca": 0.0,
     "dca_growth_rate": 0.0,
@@ -92,6 +92,17 @@ class MonthlyCloseDAO:
         ).fetchone()
         return _row_to_monthly_close(row) if row is not None else None
 
+    def get_last_close(self) -> MonthlyClose | None:
+        """Return the most recent monthly close, or ``None`` if the table is empty.
+
+        ``month`` sorts lexicographically = chronologically ('YYYY-MM') — plain
+        ``ORDER BY ... DESC LIMIT 1``, no calendar computation needed.
+        """
+        row = self._conn.execute(
+            "SELECT month, price, origin FROM monthly_close ORDER BY month DESC LIMIT 1"
+        ).fetchone()
+        return _row_to_monthly_close(row) if row is not None else None
+
 
 class AppMetaDAO:
     """Key/value access to ``app_meta`` (e.g. ``last_sync_date``, ``schema_version``)."""
@@ -148,9 +159,23 @@ class ForecastParamsDAO:
         return FlowParams.model_construct(**raw) if raw is not None else None
 
     def load_raw(self) -> dict:
-        """Return the raw key/value profile, or ``DEFAULT_PARAMS`` if unset."""
+        """Return the raw key/value profile, or a seeded ``DEFAULT_PARAMS`` if unset.
+
+        On first launch (empty profile), ``reference_price`` is auto-populated
+        from the latest monthly close (price of the most recent ``real``/
+        ``interpolated`` row) rather than left at ``0.0`` — a sensible initial
+        default the user remains free to override (Flux KPI ``current_portfolio``,
+        never the engine's ``anchor_price`` — ST8 §3.1, never merge the two).
+        Falls back to ``0.0`` if the ``monthly_close`` table is itself empty.
+        """
         raw = self._load_rows()
-        return raw if raw is not None else dict(DEFAULT_PARAMS)
+        if raw is not None:
+            return raw
+        params = dict(DEFAULT_PARAMS)
+        last_close = MonthlyCloseDAO(self._conn).get_last_close()
+        if last_close is not None:
+            params["reference_price"] = last_close.price
+        return params
 
     def _load_rows(self) -> dict | None:
         rows = self._conn.execute("SELECT key, value FROM forecast_params").fetchall()
