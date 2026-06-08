@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>₿ Bitcoin Retirement · Bear Forecast</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -21,19 +20,14 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");opacity:.5}
 .page{max-width:1440px;margin:0 auto;padding:2rem 2.5rem}
 
-/* IMPORT */
-#importScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:2rem}
-.import-logo{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--gold);letter-spacing:8px;line-height:1;text-align:center}
-.import-sub{font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--grey);text-align:center}
-.drop-zone{border:1px dashed var(--gold-dim);padding:3rem 5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg2)}
-.drop-zone:hover,.drop-zone.drag{border-color:var(--gold);background:var(--bg3)}
-.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-zone p{color:var(--grey);font-size:.85rem;margin-top:.5rem}
-.drop-icon{font-size:2.5rem;color:var(--gold-dim);margin-bottom:.75rem}
-.import-hint{font-size:.72rem;color:var(--grey2);letter-spacing:1px;text-align:center;max-width:420px;line-height:1.8}
-.btn-demo{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.6rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:.8rem;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all .2s}
-.btn-demo:hover{border-color:var(--gold-dim);color:var(--gold-pale)}
-.err-msg{color:var(--red);font-size:.8rem;letter-spacing:1px;display:none}
+/* LOADING / ERROR */
+.screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1.5rem;text-align:center}
+#errorScreen{display:none}
+.screen-logo{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--gold);letter-spacing:8px;line-height:1}
+.screen-sub{font-size:.8rem;letter-spacing:3px;text-transform:uppercase;color:var(--grey)}
+.screen-msg.err{color:var(--red);font-size:.85rem;letter-spacing:1px}
+.btn-retry{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.6rem 1.5rem;font-family:'DM Sans',sans-serif;font-size:.8rem;letter-spacing:2px;cursor:pointer;text-transform:uppercase;transition:all .2s}
+.btn-retry:hover{border-color:var(--gold-dim);color:var(--gold-pale)}
 
 /* DASHBOARD */
 #dashboard{display:none}
@@ -67,6 +61,16 @@ header{display:flex;justify-content:space-between;align-items:center;padding:1.5
 .param-item label{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--grey)}
 .param-item span{font-family:'DM Mono',monospace;font-size:.85rem;color:var(--amber);font-weight:500}
 .param-sep{width:1px;background:var(--grey3);align-self:stretch}
+
+/* PARAMS MODAL */
+#paramsModal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+#paramsPanel{background:var(--bg2);border:1px solid var(--grey3);border-radius:8px;padding:2rem;max-width:560px;width:90%;max-height:90vh;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+#paramsPanel h2{grid-column:span 2;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:var(--gold);margin-bottom:.25rem}
+#paramsPanel label{display:flex;flex-direction:column;gap:.25rem;font-size:.85rem;color:var(--grey)}
+#paramsPanel input{background:var(--bg);border:1px solid var(--grey3);color:var(--white);border-radius:4px;padding:.4rem .6rem;font-family:'DM Mono',monospace}
+#dca-extra{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:1rem;transition:opacity .2s}
+#paramsError{grid-column:span 2;color:var(--red);font-size:.8rem}
+#paramsPanel button.btn-retry{grid-column:span 1;justify-self:start}
 
 /* CHARTS */
 .charts-main{display:grid;grid-template-columns:3fr 2fr;gap:1.5rem;margin-bottom:1.5rem}
@@ -102,24 +106,16 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 </head>
 <body>
 
-<div id="importScreen">
-  <div>
-    <div class="import-logo">₿</div>
-    <div class="import-sub">Bitcoin Retirement · Bear Forecast Dashboard</div>
-  </div>
-  <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".ods,.xlsx,.xls">
-    <div class="drop-icon">↓</div>
-    <strong style="color:var(--white);font-size:.9rem">Charger le fichier forecast</strong>
-    <p>Glisser-déposer ou cliquer · ODS / XLSX</p>
-  </div>
-  <div class="import-hint">
-    Charger <strong style="color:var(--gold-pale)">forecast_bear_final.ods</strong><br>
-    Le dashboard lit automatiquement la feuille <code style="color:var(--amber)">_Export</code><br>
-    Données traitées localement — rien n'est envoyé.
-  </div>
-  <div class="err-msg" id="errMsg">⚠ Feuille _Export introuvable. Vérifier le fichier.</div>
-  <button class="btn-demo" onclick="loadDemo()">Voir avec données de démonstration ↗</button>
+<div id="loadingScreen" class="screen">
+  <div class="screen-logo">₿</div>
+  <div class="screen-sub">Bitcoin Retirement · Bear Forecast Dashboard</div>
+  <div class="screen-msg">Chargement des données...</div>
+</div>
+
+<div id="errorScreen" class="screen">
+  <div class="screen-logo">₿</div>
+  <div class="screen-msg err" id="errorMsg">—</div>
+  <button class="btn-retry" onclick="fetchForecast()">↻ Réessayer</button>
 </div>
 
 <div id="dashboard">
@@ -129,20 +125,20 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
     <div class="btc-circle">₿</div>
     <div class="hdr-title">
       <h1>Bitcoin Retirement Forecast</h1>
-      <p>Bear Scenario · Power Law · MM4 Dynamic · Sigmoïde</p>
+      <p>Bear Scenario · Power Law · MM6 Dynamic · Sigmoïde</p>
     </div>
   </div>
   <div class="hdr-right">
-    <span>Fichier chargé</span>
-    <strong id="fileName">—</strong>
-    <button class="btn-reload" onclick="resetDashboard()">↩ Changer de fichier</button>
+    <span>Données en direct · /api/forecast</span>
+    <button class="btn-reload" onclick="resetAndReload()">↻ Actualiser</button>
+    <button class="btn-reload" id="btnParams" onclick="openParamsModal()">⚙ Paramètres</button>
   </div>
 </header>
 
 <div class="kpi-grid">
-  <div class="kpi gold"><label>ARR Théorique 2026</label><div class="v gold" id="k-arr">—</div><small>Bear modéré · PL −40%</small></div>
-  <div class="kpi amber"><label>MM4 auto</label><div class="v amber" id="k-mm4">—</div><small>Moyenne mobile 4 ans</small></div>
-  <div class="kpi"><label>Prix BTC 2025</label><div class="v white" id="k-prix">—</div><small>Référence nominale</small></div>
+  <div class="kpi gold"><label>ARR Théorique <span id="lbl-arr-year">2026</span></label><div class="v gold" id="k-arr">—</div><small>Bear modéré · PL −40%</small></div>
+  <div class="kpi amber"><label>MM anchor</label><div class="v amber" id="k-mm4">—</div><small>Moyenne mobile 6 ans</small></div>
+  <div class="kpi"><label>Prix BTC <span id="lbl-prix-year">2025</span></label><div class="v white" id="k-prix">—</div><small>Référence nominale</small></div>
   <div class="kpi green"><label>Stack actuel</label><div class="v green" id="k-stack">—</div><small>BTC en portefeuille</small></div>
   <div class="kpi" id="kpi-runway"><label>Runway estimé</label><div class="v white" id="k-runway">—</div><small>Avant épuisement</small></div>
 </div>
@@ -222,141 +218,152 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 </div>
 
 <footer>
-  <span>Bear Scenario · Power Law 5.7675 · MM4 Dynamic · Sigmoïde plateau</span>
+  <span>Bear Scenario · Power Law 5.7675 · MM6 Dynamic · Sigmoïde plateau</span>
   <span id="foot-date"></span>
 </footer>
 </div>
 </div>
 
+<div id="paramsModal" style="display:none">
+  <div id="paramsPanel">
+    <h2>Paramètres de simulation</h2>
+
+    <!-- Colonne gauche : finances -->
+    <label>Stack BTC actuel
+      <input type="number" id="f-initial_stack" step="0.0001" min="0">
+    </label>
+    <label>Prix référence <span id="lbl-ref-year">2025</span> ($)
+      <input type="number" id="f-reference_price" step="1" min="1">
+    </label>
+    <label>Dépenses / mois ($)
+      <input type="number" id="f-monthly_expenses" step="1" min="1">
+    </label>
+    <label>Inflation / an (%)
+      <input type="number" id="f-inflation_rate" step="0.1" min="-100">
+    </label>
+    <label>Train de vie / an (%)
+      <input type="number" id="f-spending_growth_rate" step="0.1" min="-100">
+    </label>
+    <label>Début des dépenses BTC (année)
+      <input type="number" id="f-btc_spending_start_year" step="1" min="2026" max="2072">
+    </label>
+
+    <!-- Colonne droite : DCA optionnel -->
+    <label>DCA mensuel ($)
+      <input type="number" id="f-monthly_dca" step="1" min="0"
+             oninput="toggleDCA()">
+    </label>
+    <div id="dca-extra">
+      <label>Croissance DCA / an (%)
+        <input type="number" id="f-dca_growth_rate" step="0.1" min="-100">
+      </label>
+      <label>Fin DCA (année)
+        <input type="number" id="f-dca_end_year" step="1" min="2026" max="2072">
+      </label>
+    </div>
+
+    <!-- Erreur -->
+    <div id="paramsError" style="display:none"></div>
+
+    <!-- Actions -->
+    <button class="btn-retry" onclick="submitParams()">Sauvegarder</button>
+    <button class="btn-retry" onclick="closeParamsModal()">Annuler</button>
+  </div>
+</div>
+
 <script>
 let charts={}, allRows=[];
-
-// DRAG & DROP
-const dz=document.getElementById('dropZone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag')});
-dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
-document.getElementById('fileInput').addEventListener('change',e=>handleFile(e.target.files[0]));
-
-function handleFile(file){
-  if(!file) return;
-  document.getElementById('errMsg').style.display='none';
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array',cellDates:false,raw:false});
-      // Chercher la feuille _Export
-      const expSheet=wb.Sheets['_Export'];
-      if(!expSheet){
-        document.getElementById('errMsg').style.display='block';
-        return;
-      }
-      const data=XLSX.utils.sheet_to_json(expSheet,{header:1,defval:null,raw:true});
-      document.getElementById('fileName').textContent=file.name;
-      buildDashboard(data);
-    }catch(err){
-      document.getElementById('errMsg').style.display='block';
-      console.error(err);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-// Lecture feuille _Export
-// Row 0 (index) = params : clé col 0,2,4... val col 1,3,5...
-// Row 2 = headers colonnes
-// Rows 3-19 = historique 2009-2025
-// Row 20 = séparateur
-// Rows 21-67 = projection 2026-2072
-
-function parseExport(data){
-  // Paramètres : row 0
-  const params={};
-  const row0=data[0]||[];
-  for(let i=0;i<row0.length-1;i+=2){
-    const key=row0[i], val=row0[i+1];
-    if(key && val!=null) params[key]=typeof val==='string'?val:Number(val);
-  }
-
-  // Historique : rows 3-19 (index 3 to 19)
-  const hist=[];
-  for(let i=3;i<=19;i++){
-    const r=data[i]||[];
-    const year=num(r[0]);
-    if(!year) continue;
-    hist.push({year,n:num(r[1]),arrReal:num(r[2]),arrTheo:num(r[3]),
-               pricenom:num(r[4]),pricereal:num(r[5]),
-               cdvInf:num(r[6]),cdvTrain:num(r[7]),
-               depBTC:num(r[8]),stack:num(r[9]),portfolio:num(r[10])});
-  }
-
-  // Projection : rows 21-67 (index 21 to 67)
-  const proj=[];
-  for(let i=21;i<=67;i++){
-    const r=data[i]||[];
-    const year=num(r[0]);
-    if(!year||year<2026) continue;
-    proj.push({year,n:num(r[1]),arrReal:num(r[2]),arrTheo:num(r[3]),
-               pricenom:num(r[4]),pricereal:num(r[5]),
-               cdvInf:num(r[6]),cdvTrain:num(r[7]),
-               depBTC:num(r[8]),stack:num(r[9]),portfolio:num(r[10])});
-  }
-
-  return{params,hist,proj};
-}
 
 function num(v){if(v==null||v===''||v==='nan') return null; const n=Number(v); return isNaN(n)?null:n;}
 function fmt$(v){return v!=null?'$'+Math.round(v).toLocaleString('fr-FR'):'—'}
 function fmtp(v){return v!=null?(v*100).toFixed(2)+'%':'—'}
 function fmtb(v){return v!=null?v.toFixed(4):'—'}
 
+function destroyCharts(){
+  Object.values(charts).forEach(c=>c&&c.destroy&&c.destroy());
+  charts={};
+}
+
+function showScreen(id){
+  ['loadingScreen','errorScreen','dashboard'].forEach(s=>{
+    document.getElementById(s).style.display = (s===id) ? (s==='dashboard'?'block':'flex') : 'none';
+  });
+}
+
+function showError(msg){
+  destroyCharts();
+  document.getElementById('errorMsg').textContent=msg;
+  showScreen('errorScreen');
+}
+
+function fetchForecast(){
+  showScreen('loadingScreen');
+  fetch('/api/forecast')
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.error){ showError(data.message||data.error); return; }
+      buildDashboard(data);
+    })
+    .catch(err=>showError('Erreur réseau : '+err));
+}
+
+function resetAndReload(){
+  destroyCharts();
+  fetchForecast();
+}
+
 function buildDashboard(data){
-  const {params,hist,proj}=parseExport(data);
-  if(!params.mm4 && proj.length===0){
-    document.getElementById('errMsg').style.display='block'; return;
+  const hist=data.series.filter(r=>r.kind==='historical');
+  const proj=data.series.filter(r=>r.kind==='projection');
+
+  if(!data.params?.mm_anchor && proj.length===0){
+    showError('Données insuffisantes pour construire le dashboard.');
+    return;
   }
 
-  // Runway
-  const runIdx=proj.findIndex(r=>r.stack!=null&&r.stack<0);
-  const runway=runIdx>=0?proj[runIdx].year-2025+' ans':'∞';
+  // Runway — vient directement de l'API (pas recalculé depuis la série)
+  const runVal=(data.params.runway==='Infinity')?Infinity:data.params.runway;
+  const runway=!isFinite(runVal)?'∞':runVal+' ans';
+  const rc=!isFinite(runVal)?'green':runVal<10?'amber':'red';
+
+  // KPI labels — années dynamiques (ancre / année en cours)
+  document.getElementById('lbl-arr-year').textContent=data.params.current_year??'—';
+  document.getElementById('lbl-prix-year').textContent=data.params.anchor_year??'—';
+  document.getElementById('lbl-ref-year').textContent=data.params.anchor_year??'—';
 
   // KPIs
-  const arr2026=proj[0]?.arrTheo;
-  document.getElementById('k-arr').textContent=fmtp(arr2026);
-  document.getElementById('k-mm4').textContent=fmtp(params.mm4);
-  document.getElementById('k-prix').textContent=fmt$(params.prix_ref_2025);
-  document.getElementById('k-stack').textContent=params.stack_btc?.toFixed(4)+' BTC';
+  document.getElementById('k-arr').textContent=fmtp(proj[0]?.arr_theo);
+  document.getElementById('k-mm4').textContent=fmtp(data.params.mm_anchor);
+  document.getElementById('k-prix').textContent=fmt$(data.params.reference_price);
+  document.getElementById('k-stack').textContent=data.params.initial_stack?.toFixed(4)+' BTC';
   document.getElementById('k-runway').textContent=runway;
   const kr=document.getElementById('kpi-runway');
-  const rc=runIdx<0?'green':runIdx<10?'amber':'red';
   kr.className='kpi '+rc;
   document.getElementById('k-runway').className='v '+rc;
 
   // Params bar
-  document.getElementById('p-year').textContent=params.année_en_cours||'—';
-  document.getElementById('p-spend').textContent=params.depenses_mois?'$'+params.depenses_mois.toLocaleString('fr-FR'):'—';
-  document.getElementById('p-inf').textContent=fmtp(params.inflation);
-  document.getElementById('p-life').textContent=fmtp(params.train_de_vie);
-  document.getElementById('p-plat').textContent=fmtp(params.plateau_arr);
-  document.getElementById('p-plat-yr').textContent=params.annee_plateau||'—';
-  document.getElementById('p-port').textContent=fmt$(params.portfolio_actuel);
+  document.getElementById('p-year').textContent=data.params.current_year||'—';
+  document.getElementById('p-spend').textContent=data.params.monthly_expenses?'$'+data.params.monthly_expenses.toLocaleString('fr-FR'):'—';
+  document.getElementById('p-inf').textContent=fmtp(data.params.inflation_rate);
+  document.getElementById('p-life').textContent=fmtp(data.params.spending_growth_rate);
+  document.getElementById('p-plat').textContent=fmtp(data.params.plateau_arr);
+  document.getElementById('p-plat-yr').textContent=data.params.plateau_year||'—';
+  document.getElementById('p-port').textContent=fmt$(data.params.current_portfolio);
 
-  buildCharts(hist,proj,params);
+  buildCharts(hist,proj,data.params);
   buildTable(hist,proj);
 
-  document.getElementById('foot-date').textContent='Chargé le '+new Date().toLocaleDateString('fr-FR');
-  document.getElementById('importScreen').style.display='none';
-  document.getElementById('dashboard').style.display='block';
+  document.getElementById('foot-date').textContent='Actualisé le '+new Date().toLocaleDateString('fr-FR');
+  showScreen('dashboard');
 }
 
 function buildCharts(hist,proj,params){
-  Object.values(charts).forEach(c=>c&&c.destroy&&c.destroy());
-  charts={};
+  destroyCharts();
 
   const projY=proj.map(r=>r.year);
   const allY=[...hist.map(r=>r.year),...projY];
-  const allNom=[...hist.map(r=>r.pricenom),...proj.map(r=>r.pricenom)];
-  const allReal=[...hist.map(r=>r.pricereal),...proj.map(r=>r.pricereal)];
+  const allNom=[...hist.map(r=>r.nominal_price),...proj.map(r=>r.nominal_price)];
+  const allReal=[...hist.map(r=>r.real_price),...proj.map(r=>r.real_price)];
   const plateau=params.plateau_arr||0.03;
 
   const co={responsive:true,maintainAspectRatio:false,
@@ -396,7 +403,7 @@ function buildCharts(hist,proj,params){
   // ARR
   charts.arr=new Chart(document.getElementById('cArr'),{type:'line',
     data:{labels:projY,datasets:[
-      {label:'ARR',data:proj.map(r=>r.arrTheo!=null?+(r.arrTheo*100).toFixed(2):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.06)',tension:0.4},
+      {label:'ARR',data:proj.map(r=>r.arr_theo!=null?+(r.arr_theo*100).toFixed(2):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.06)',tension:0.4},
       {label:'Plateau',data:projY.map(()=>+(plateau*100).toFixed(1)),borderColor:'#7A6228',borderWidth:1,pointRadius:0,borderDash:[5,4],fill:false},
     ]},
     options:{...co,scales:{
@@ -408,8 +415,8 @@ function buildCharts(hist,proj,params){
   // COÛT DE VIE
   charts.cost=new Chart(document.getElementById('cCost'),{type:'line',
     data:{labels:projY,datasets:[
-      {label:'Inflation',data:proj.map(r=>r.cdvInf!=null?Math.round(r.cdvInf):null),borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.3},
-      {label:'Train de vie',data:proj.map(r=>r.cdvTrain!=null?Math.round(r.cdvTrain):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.05)',tension:0.3},
+      {label:'Inflation',data:proj.map(r=>r.cdv_inflation!=null?Math.round(r.cdv_inflation):null),borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.3},
+      {label:'Train de vie',data:proj.map(r=>r.cdv_train!=null?Math.round(r.cdv_train):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.05)',tension:0.3},
     ]},
     options:{...co,scales:{
       x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
@@ -430,9 +437,9 @@ function buildTable(hist,proj){
     if(r.year===2025) tr.className='tr-curr';
     tr.innerHTML=`<td>${r.year}<span class="tag">●</span></td>
       <td class="dim">${r.n??'—'}</td>
-      <td class="${r.arrReal!=null?(r.arrReal>0?'pos':'neg'):''}">${fmtp(r.arrReal)}</td>
+      <td class="${r.arr_reel!=null?(r.arr_reel>0?'pos':'neg'):''}">${fmtp(r.arr_reel)}</td>
       <td class="dim">—</td>
-      <td>${fmt$(r.pricenom)}</td><td class="dim">${fmt$(r.pricereal)}</td>
+      <td>${fmt$(r.nominal_price)}</td><td class="dim">${fmt$(r.real_price)}</td>
       <td class="dim">—</td><td class="dim">—</td>
       <td class="dim">—</td><td class="dim">—</td><td class="dim">—</td>`;
     tbody.appendChild(tr); allRows.push(tr);
@@ -445,11 +452,11 @@ function buildTable(hist,proj){
     tr.innerHTML=`<td>${r.year}<span class="tag">▸</span></td>
       <td class="dim">+${r.n}</td>
       <td class="dim">—</td>
-      <td class="dim">${fmtp(r.arrTheo)}</td>
-      <td>${fmt$(r.pricenom)}</td><td class="dim">${fmt$(r.pricereal)}</td>
-      <td class="dim">${fmt$(r.cdvInf)}</td>
-      <td>${fmt$(r.cdvTrain)}</td>
-      <td class="dim">${fmtb(r.depBTC)}</td>
+      <td class="dim">${fmtp(r.arr_theo)}</td>
+      <td>${fmt$(r.nominal_price)}</td><td class="dim">${fmt$(r.real_price)}</td>
+      <td class="dim">${fmt$(r.cdv_inflation)}</td>
+      <td>${fmt$(r.cdv_train)}</td>
+      <td class="dim">${fmtb(r.btc_out)}</td>
       <td class="${pos?'pos':'neg'}">${fmtb(r.stack)}</td>
       <td class="${pos?'':'neg'}">${fmt$(r.portfolio)}</td>`;
     tbody.appendChild(tr); allRows.push(tr);
@@ -462,54 +469,101 @@ function filterTable(type,btn){
   allRows.forEach(tr=>tr.style.display=(type==='all'||tr.dataset.type===type)?'':'none');
 }
 
-function resetDashboard(){
-  document.getElementById('dashboard').style.display='none';
-  document.getElementById('importScreen').style.display='flex';
-  document.getElementById('fileInput').value='';
+// Conversions % ↔ décimal (inflation, spending_growth, dca_growth)
+// Affichage : 0.06 → "6" ; Saisie : "6" → 0.06
+const PCT_FIELDS = ['inflation_rate','spending_growth_rate','dca_growth_rate'];
+
+function openParamsModal() {
+  fetch('/api/params')
+    .then(r => r.json())
+    .then(p => {
+      // remplir les champs
+      document.getElementById('f-initial_stack').value = p.initial_stack ?? '';
+      document.getElementById('f-reference_price').value = p.reference_price ?? '';
+      document.getElementById('f-monthly_expenses').value = p.monthly_expenses ?? '';
+      // % fields : multiplier × 100 pour affichage
+      document.getElementById('f-inflation_rate').value =
+        p.inflation_rate != null ? +(p.inflation_rate * 100).toFixed(4) : '';
+      document.getElementById('f-spending_growth_rate').value =
+        p.spending_growth_rate != null ? +(p.spending_growth_rate * 100).toFixed(4) : '';
+      document.getElementById('f-btc_spending_start_year').value =
+        p.btc_spending_start_year ?? '';
+      document.getElementById('f-monthly_dca').value = p.monthly_dca ?? 0;
+      document.getElementById('f-dca_growth_rate').value =
+        p.dca_growth_rate != null ? +(p.dca_growth_rate * 100).toFixed(4) : '';
+      document.getElementById('f-dca_end_year').value = p.dca_end_year ?? '';
+      toggleDCA();
+      document.getElementById('paramsError').style.display = 'none';
+      document.getElementById('paramsModal').style.display = 'flex';
+    })
+    .catch(err => alert('Impossible de charger les paramètres : ' + err));
 }
 
-function loadDemo(){
-  // Génère des données de démo sans fichier
-  const data=[];
-  // Row 0 params
-  const r0=Array(22).fill(null);
-  r0[0]='année_en_cours';r0[1]=2026;r0[2]='stack_btc';r0[3]=1;
-  r0[4]='depenses_mois';r0[5]=1500;r0[6]='prix_ref_2025';r0[7]=101700;
-  r0[8]='inflation';r0[9]=0.05;r0[10]='plateau_arr';r0[11]=0.03;
-  r0[12]='train_de_vie';r0[13]=0.05;r0[14]='annee_plateau';r0[15]=2055;
-  r0[16]='mm4';r0[17]=0.3613;r0[18]='runway';r0[19]='10 ans';
-  r0[20]='portfolio_actuel';r0[21]=101700;
-  data.push(r0);
-  data.push(Array(11).fill(null)); // row 1
-  data.push(['année','n','arr_reel','arr_theo','prix_nominal','prix_reel','cdv_inflation','cdv_train','dep_btc','stack_btc','portfolio']); // row 2
-
-  const ph=[0,0.14,5.85,8.36,192.65,527.24,272.45,568.49,3983,7572.91,7395.25,11116.38,47436.93,28197.88,28859.47,65964.11,101700];
-  for(let i=0;i<17;i++){
-    const y=2009+i; const n=y-2025;
-    const arr=i>=2?ph[i]/ph[i-1]-1:null;
-    const real=ph[i]>0?ph[i]*Math.pow(1.03,2025-y):null;
-    data.push([y,n,arr,null,ph[i]>0?ph[i]:null,real,null,null,null,null,null]);
-  }
-  data.push(Array(11).fill('---')); // séparateur row 20
-
-  const MM4=0.3613,A=5.7675,PLAT=0.03,PY=2055,NB=6;
-  const MID=(2026+PY)/2,KS=Math.log(19)/(PY-MID);
-  let price=101700,stack=1;
-  for(let i=0;i<47;i++){
-    const y=2026+i,n=i+1,t=y-2008;
-    const pl=Math.pow(t/(t-1),A)-1;
-    const alpha=Math.max(0,1-i/NB);
-    const disc=(alpha*MM4+(1-alpha)*pl)*0.60;
-    const sig=1/(1+Math.exp(-KS*(y-MID)));
-    const arr=Math.max(disc*(1-sig)+PLAT*sig,PLAT);
-    price*=(1+arr);
-    const cdvI=(1500*12)*Math.pow(1.05,n), cdvL=(1500*12)*Math.pow(1.05,n);
-    const dep=cdvL/price; stack-=dep;
-    data.push([y,n,null,arr,price,price*Math.pow(1.05,2025-y),cdvI,cdvL,dep,stack,stack*price]);
-  }
-  document.getElementById('fileName').textContent='demo';
-  buildDashboard(data);
+function closeParamsModal() {
+  document.getElementById('paramsModal').style.display = 'none';
 }
+
+function toggleDCA() {
+  const dca = parseFloat(document.getElementById('f-monthly_dca').value) || 0;
+  document.getElementById('dca-extra').style.display = dca > 0 ? '' : 'none';
+}
+
+function submitParams() {
+  const val = id => document.getElementById(id).value.trim();
+  const num = id => { const v = val(id); return v === '' ? null : parseFloat(v); };
+  const pct = id => { const v = num(id); return v == null ? null : v / 100; };
+  const int = id => { const v = val(id); return v === '' ? null : parseInt(v, 10); };
+
+  const dca = num('f-monthly_dca') ?? 0;
+  const body = {
+    initial_stack:           num('f-initial_stack'),
+    reference_price:         num('f-reference_price'),
+    monthly_expenses:        num('f-monthly_expenses'),
+    inflation_rate:          pct('f-inflation_rate'),
+    spending_growth_rate:    pct('f-spending_growth_rate'),
+    btc_spending_start_year: int('f-btc_spending_start_year'),
+    monthly_dca:             dca,
+    dca_growth_rate:         pct('f-dca_growth_rate') ?? 0,
+    dca_end_year:            dca > 0 ? int('f-dca_end_year') : null,
+  };
+  // nettoyer les null non tolérés par le backend
+  Object.keys(body).forEach(k => { if (body[k] == null && k !== 'dca_end_year')
+    body[k] = undefined; });
+
+  fetch('/api/params', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  })
+  .then(r => r.json().then(data => ({ok: r.ok, data})))
+  .then(({ok, data}) => {
+    if (ok) {
+      closeParamsModal();
+      fetchForecast();       // rafraîchit tout le dashboard
+    } else {
+      // afficher l'erreur Pydantic ou message générique
+      const msg = data.detail
+        ? data.detail.map(e => (e.loc?.length ? e.loc.slice(-1)[0] + ' : ' : '') + e.msg).join('\n')
+        : (data.message || JSON.stringify(data));
+      const el = document.getElementById('paramsError');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+  })
+  .catch(err => {
+    const el = document.getElementById('paramsError');
+    el.textContent = 'Erreur réseau : ' + err;
+    el.style.display = 'block';
+  });
+}
+
+// Fermer le modal en cliquant l'overlay (hors panel)
+document.getElementById('paramsModal')
+  ?.addEventListener('click', e => {
+    if (e.target.id === 'paramsModal') closeParamsModal();
+  });
+
+window.addEventListener('load', fetchForecast);
 </script>
 </body>
 </html>

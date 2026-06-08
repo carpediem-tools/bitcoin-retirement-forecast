@@ -149,7 +149,12 @@ def create_app(config: AppConfig | None = None) -> Flask:
                     context={"anchor_year": anchor_year, "horizon": BEAR_CONSTANTS.HORIZON},
                 )
             except ValidationError as exc:
-                return jsonify({"error": "PARAM_VALIDATION", "detail": exc.errors()}), 422
+                # include_context=False : ctx.error embarque l'exception Python brute
+                # (ValueError des validators), non sérialisable en JSON par jsonify.
+                return jsonify({
+                    "error": "PARAM_VALIDATION",
+                    "detail": exc.errors(include_context=False),
+                }), 422
 
             dao.save(flow_params)
             return jsonify({"status": "ok"})
