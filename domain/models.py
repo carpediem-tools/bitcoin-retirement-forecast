@@ -73,3 +73,24 @@ class PriceEngineResult:
     anchor_year: int
     anchor_price: float
     series: tuple[ProjectedYear, ...]   # anchor (arr_theo=None) .. HORIZON (2072)
+
+
+@dataclass(frozen=True)
+class FlowYear:
+    """One projected year of the Flux series (ST8 §3.5)."""
+
+    year: int
+    btc_in: float
+    btc_out: float
+    cdv_inflation: float
+    cdv_train: float
+    stack: float
+    portfolio: float
+
+
+@dataclass(frozen=True)
+class FlowResult:
+    """FlowEngine output (ST8 §3.5): series from anchor_year to HORIZON + runway."""
+
+    series: tuple[FlowYear, ...]
+    runway: int | float   # years, or float('inf') if the stack never goes negative
