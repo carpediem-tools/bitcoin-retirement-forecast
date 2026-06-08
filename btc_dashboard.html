@@ -41,6 +41,11 @@ header{display:flex;justify-content:space-between;align-items:center;padding:1.5
 .hdr-right strong{font-size:.9rem;color:var(--gold-pale)}
 .btn-reload{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.4rem 1rem;font-size:.7rem;letter-spacing:1px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;text-transform:uppercase;margin-top:.5rem}
 .btn-reload:hover{border-color:var(--gold-dim);color:var(--gold)}
+.hdr-right .sync-badge{display:inline-flex;align-items:center;gap:.35rem;color:var(--grey);font-size:.65rem;letter-spacing:1px;font-family:'DM Sans',sans-serif;text-transform:uppercase}
+.sync-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--grey2);flex:none}
+.sync-badge.ok .dot{background:var(--green)}
+.sync-badge.degraded .dot{background:var(--red)}
+.sync-badge.unknown .dot{background:var(--grey2)}
 
 /* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem}
@@ -129,8 +134,7 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
     </div>
   </div>
   <div class="hdr-right">
-    <span>Données en direct · /api/forecast</span>
-    <button class="btn-reload" onclick="resetAndReload()">↻ Actualiser</button>
+    <span id="syncBadge" class="sync-badge unknown"><span class="dot"></span><span id="syncBadgeLabel">Sync —</span></span>
     <button class="btn-reload" id="btnParams" onclick="openParamsModal()">⚙ Paramètres</button>
   </div>
 </header>
@@ -138,7 +142,7 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 <div class="kpi-grid">
   <div class="kpi gold"><label>ARR Théorique <span id="lbl-arr-year">2026</span></label><div class="v gold" id="k-arr">—</div><small>Bear modéré · PL −40%</small></div>
   <div class="kpi amber"><label>MM anchor</label><div class="v amber" id="k-mm4">—</div><small>Moyenne mobile 6 ans</small></div>
-  <div class="kpi"><label>Prix BTC <span id="lbl-prix-year">2025</span></label><div class="v white" id="k-prix">—</div><small>Référence nominale</small></div>
+  <div class="kpi"><label>Last Monthly Close</label><div class="v white" id="k-prix">—</div><small id="lbl-prix-year">Référence nominale</small></div>
   <div class="kpi green"><label>Stack actuel</label><div class="v green" id="k-stack">—</div><small>BTC en portefeuille</small></div>
   <div class="kpi" id="kpi-runway"><label>Runway estimé</label><div class="v white" id="k-runway">—</div><small>Avant épuisement</small></div>
 </div>
@@ -232,9 +236,6 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
     <label>Stack BTC actuel
       <input type="number" id="f-initial_stack" step="0.0001" min="0">
     </label>
-    <label><span id="lbl-reference_price">Reference price ($)</span>
-      <input type="number" id="f-reference_price" step="1" min="1">
-    </label>
     <label>Dépenses / mois ($)
       <input type="number" id="f-monthly_expenses" step="1" min="1">
     </label>
@@ -307,11 +308,6 @@ function fetchForecast(){
     .catch(err=>showError('Erreur réseau : '+err));
 }
 
-function resetAndReload(){
-  destroyCharts();
-  fetchForecast();
-}
-
 function buildDashboard(data){
   const hist=data.series.filter(r=>r.kind==='historical');
   const proj=data.series.filter(r=>r.kind==='projection');
@@ -328,14 +324,16 @@ function buildDashboard(data){
 
   // KPI labels — années dynamiques (ancre / année en cours)
   document.getElementById('lbl-arr-year').textContent=data.params.current_year??'—';
-  document.getElementById('lbl-prix-year').textContent=data.params.anchor_year??'—';
+  document.getElementById('lbl-prix-year').textContent=data.params.last_close_date??'—';
 
-  // Reference-price label (EN) — built from the latest monthly close (last_close_date/last_close_price)
-  const lblRefPrice=document.getElementById('lbl-reference_price');
-  if(data.params.last_close_date!=null && data.params.last_close_price!=null){
-    lblRefPrice.textContent=`Last monthly close (${data.params.last_close_date}): $${Math.round(data.params.last_close_price).toLocaleString('en-US')}`;
+  // Sync badge — driven by /api/forecast params (reference_price_sync, last_sync_date_short)
+  const syncBadge=document.getElementById('syncBadge');
+  if(data.params.reference_price_sync==='synchronized'){
+    syncBadge.className='sync-badge ok';
+    document.getElementById('syncBadgeLabel').textContent='Sync OK';
   } else {
-    lblRefPrice.textContent='Reference price ($)';
+    syncBadge.className='sync-badge degraded';
+    document.getElementById('syncBadgeLabel').textContent='Sync KO';
   }
 
   // KPIs
@@ -486,7 +484,6 @@ function openParamsModal() {
     .then(p => {
       // remplir les champs
       document.getElementById('f-initial_stack').value = p.initial_stack ?? '';
-      document.getElementById('f-reference_price').value = p.reference_price ?? '';
       document.getElementById('f-monthly_expenses').value = p.monthly_expenses ?? '';
       // % fields : multiplier × 100 pour affichage
       document.getElementById('f-inflation_rate').value =
@@ -524,7 +521,6 @@ function submitParams() {
   const dca = num('f-monthly_dca') ?? 0;
   const body = {
     initial_stack:           num('f-initial_stack'),
-    reference_price:         num('f-reference_price'),
     monthly_expenses:        num('f-monthly_expenses'),
     inflation_rate:          pct('f-inflation_rate'),
     spending_growth_rate:    pct('f-spending_growth_rate'),
