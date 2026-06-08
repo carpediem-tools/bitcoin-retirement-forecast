@@ -51,6 +51,8 @@ python run.py
 
 All data — your inputs and the monthly-close database — stays on your machine. The only network call is a single keyless request to CoinGecko at launch to refresh recent closes. If that call fails, the app runs in a degraded sync state on existing local data.
 
+Historical data: Coin Metrics Community Data (CC license) github.com/coinmetrics/data
+
 ## License
 
 [MIT](LICENSE)
