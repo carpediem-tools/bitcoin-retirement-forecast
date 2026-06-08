@@ -15,7 +15,7 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
 
 ## Commandes
 - Lancer : `python run.py` → waitress sur `127.0.0.1:8000` (**fallback bind incrémental** 8001, 8002… si occupé) → ouvre un onglet navigateur
-- Tests : `pytest` *(à confirmer une fois la structure de test posée)*
+- Tests : `pytest tests/ -v`
 - Liaison réseau : `127.0.0.1` **uniquement**, jamais `0.0.0.0` (mono-utilisateur, pas d'auth)
 
 ## Architecture — couches et dépendances autorisées
@@ -27,6 +27,7 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
 - Couche HTTP (Flask) — `GET`/`POST /api/params`, `GET /api/forecast` (sérialise `ForecastExportDTO`).
 - Couche données — SQLite (lecture/écriture clôtures mensuelles).
 - **Règle de dépendance :** `domain/` ne dépend de **rien** (ni Flask, ni SQLite, ni requests). Les couches externes dépendent de `domain/`, jamais l'inverse.
+  **Exception documentée (ST8 §3.4) :** `domain/flow_engine/__init__.py` importe `FlowParams` depuis `config/params.py` — `FlowEngineInput` est défini dans ce package (≠ `domain/models.py`) pour éviter la circularité `domain → config`. Seul point de contact `domain → config` autorisé.
 - **Langue :** code / champs / routes / logs / libellés UI en **anglais** ; prose des specs et échanges en **français**.
 - **Sens des dépendances** : `domain/` est pur (aucun import de `storage/`, `sync/`, `web/`,
   `requests`, `flask`, `sqlite3`). `storage/` PEUT importer `domain.models` (types de frontière
