@@ -8,6 +8,7 @@ config/ vs domain/").
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -94,3 +95,51 @@ class FlowResult:
 
     series: tuple[FlowYear, ...]
     runway: int | float   # years, or float('inf') if the stack never goes negative
+
+
+@dataclass(frozen=True)
+class ForecastParams:
+    """DTO params block — mirrors the key/value row of ``_Export`` (ST8 §3.6).
+
+    NOT to be confused with ``config.params.FlowParams`` (Pydantic, validates
+    user input): this is the frozen DTO carrier assembled by the pipeline.
+    """
+
+    current_year: int            # = anchor_year + 1
+    anchor_year: int
+    initial_stack: float         # stack_btc        (F5)
+    monthly_expenses: float      # depenses_mois    (C6)
+    reference_price: float       # prix_ref_2025    (F6) — KPI ; ≠ anchor_price
+    inflation_rate: float        # inflation        (C7)
+    plateau_arr: float           # plateau_arr      (F7) — BearConstants.PLATEAU_ARR
+    spending_growth_rate: float  # train_de_vie     (C8)
+    plateau_year: int            # annee_plateau    (F8) — BearConstants.PLATEAU_YEAR
+    mm_anchor: float             # mm4 -> mm_anchor (C12)
+    runway: int | float          # runway           (F12) ; "Infinity" at HTTP serialization
+    current_portfolio: float     # portfolio_actuel (F11) = initial_stack x reference_price
+
+
+@dataclass(frozen=True)
+class SeriesPoint:
+    """One row of the DTO ``series`` table — mirrors ``_Export`` rows 4-68 (ST8 §3.6)."""
+
+    year: int                    # année        (col A <- H)
+    n: int                       # n            (col B <- I) = year - anchor_year
+    kind: Literal["historical", "projection"]
+    arr_reel: float | None       # arr_reel     (col C <- J) — historical
+    arr_theo: float | None       # arr_theo     (col D <- K) — projection
+    nominal_price: float         # prix_nominal (col E <- L)
+    real_price: float            # prix_reel    (col F <- M) = nominal x (1+inflation)^(anchor_year - year)
+    cdv_inflation: float | None  # cdv_inflation (col G <- N) — projection
+    cdv_train: float | None      # cdv_train    (col H <- O) — projection
+    btc_out: float | None        # dep_btc      (col I <- P) — projection
+    stack: float | None          # stack_btc    (col J <- Q) — projection
+    portfolio: float | None      # portfolio    (col K <- R) — projection
+
+
+@dataclass(frozen=True)
+class ForecastExportDTO:
+    """Pipeline output — semantic mirror of ``_Export`` (ST8 §3.6)."""
+
+    params: ForecastParams
+    series: tuple[SeriesPoint, ...]   # annual_history[0].year .. HORIZON
