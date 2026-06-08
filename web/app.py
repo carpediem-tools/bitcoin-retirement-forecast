@@ -52,6 +52,30 @@ def dto_to_dict(dto: ForecastExportDTO) -> dict:
     return _fix_inf(dataclasses.asdict(dto))
 
 
+def compute_sync_status(last_close_date: str) -> str:
+    """Classify ``last_close_date`` ('YYYY-MM') against the current month (ST7 §4.2).
+
+    "synchronized" when the last close is the previous month (M-1); also
+    "synchronized" for M-2 within a 5-day grace window at the start of the
+    month (CoinGecko monthly-close lag). Anything else is "stale".
+    """
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc)
+    year, month = now.year, now.month
+    m1_month = month - 1 if month > 1 else 12
+    m1_year = year if month > 1 else year - 1
+    m2_month = m1_month - 1 if m1_month > 1 else 12
+    m2_year = m1_year if m1_month > 1 else m1_year - 1
+    expected_m1 = f"{m1_year}-{m1_month:02d}"
+    expected_m2 = f"{m2_year}-{m2_month:02d}"
+    if last_close_date == expected_m1:
+        return "synchronized"
+    if last_close_date == expected_m2 and now.day <= 5:
+        return "synchronized"
+    return "stale"
+
+
 def create_app(config: AppConfig | None = None) -> Flask:
     """Build the Flask app. ``config`` carries ``db_path``/``host``/``port``."""
     config = config or AppConfig.load()
@@ -77,15 +101,30 @@ def create_app(config: AppConfig | None = None) -> Flask:
                 }), 503
 
             raw = ForecastParamsDAO(conn).load_raw()
+            # reference_price is always overwritten with the last DB monthly close —
+            # never a user-editable field (ST8 §3.1: KPI current_portfolio, distinct
+            # from the engine's anchor_price). Fallback to the loaded value only if
+            # the table is empty (theoretically impossible in production with the seed).
+            last_close = MonthlyCloseDAO(conn).get_last_close()
+            if last_close is not None:
+                raw["reference_price"] = last_close.price
             flow_params = FlowParams.model_construct(**raw)
             try:
                 dto = ForecastPipeline().run(closes, flow_params)
                 payload = dto_to_dict(dto)
                 # Last monthly close, exposed for the params-modal label only —
                 # NOT the engine's anchor_price (ST8 §3.1, never merge the two).
-                last_close = closes[-1]
-                payload["params"]["last_close_date"] = last_close.month.strftime("%Y-%m")
-                payload["params"]["last_close_price"] = last_close.price
+                last_close_row = closes[-1]
+                last_close_date = last_close_row.month.strftime("%Y-%m")
+                payload["params"]["last_close_date"] = last_close_date
+                payload["params"]["last_close_price"] = last_close_row.price
+                # Sync badge data (ST7 §4.2): classify the last close against the
+                # current month, and expose the persisted last sync date (short form).
+                last_sync_date = AppMetaDAO(conn).get_meta("last_sync_date")
+                payload["params"]["reference_price_sync"] = compute_sync_status(last_close_date)
+                payload["params"]["last_sync_date_short"] = (
+                    last_sync_date[:10] if last_sync_date is not None else None
+                )
                 return jsonify(payload)
             except InsufficientHistoryError as exc:
                 return jsonify({
@@ -139,6 +178,16 @@ def create_app(config: AppConfig | None = None) -> Flask:
             body = request.get_json(silent=True)
             if not body:
                 return jsonify({"error": "INVALID_JSON"}), 400
+
+            # reference_price is no longer a user-editable field (ST8 §3.1):
+            # always overwritten with the last DB monthly close, like GET /api/forecast.
+            # Fallback to the persisted profile if the table is empty (theoretically
+            # impossible in production with the seed).
+            last_close = MonthlyCloseDAO(conn).get_last_close()
+            if last_close is not None:
+                body["reference_price"] = last_close.price
+            else:
+                body["reference_price"] = dao.load_raw().get("reference_price")
 
             # Cross-field validators need anchor_year/HORIZON in context (ST8 §4.1).
             anchor_year = 2025

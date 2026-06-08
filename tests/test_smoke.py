@@ -8,9 +8,11 @@ the production ``forecast.db``.
 
 from __future__ import annotations
 
+import datetime as datetime_module
+
 from config.app_config import AppConfig
 from storage.db import init_schema
-from web.app import create_app
+from web.app import compute_sync_status, create_app
 
 
 def _client(tmp_path):
@@ -69,6 +71,30 @@ def test_params_get_and_post_return_200(tmp_path):
     assert post_resp.status_code in (200, 422)
     if post_resp.status_code == 200:
         assert post_resp.get_json() == {"status": "ok"}
+
+
+def _freeze_now(monkeypatch, year, month, day):
+    class FrozenDatetime(datetime_module.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(year, month, day, tzinfo=tz)
+
+    monkeypatch.setattr(datetime_module, "datetime", FrozenDatetime)
+
+
+def test_compute_sync_status_m1_exact_is_synchronized(monkeypatch):
+    _freeze_now(monkeypatch, 2026, 6, 8)
+    assert compute_sync_status("2026-05") == "synchronized"
+
+
+def test_compute_sync_status_m2_within_grace_is_synchronized(monkeypatch):
+    _freeze_now(monkeypatch, 2026, 6, 3)
+    assert compute_sync_status("2026-04") == "synchronized"
+
+
+def test_compute_sync_status_m2_past_grace_is_stale(monkeypatch):
+    _freeze_now(monkeypatch, 2026, 6, 8)
+    assert compute_sync_status("2026-04") == "stale"
 
 
 def test_schema_init_is_idempotent(tmp_path):
