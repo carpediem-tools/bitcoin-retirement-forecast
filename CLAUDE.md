@@ -20,11 +20,19 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
 
 ## Architecture — couches et dépendances autorisées
 - `domain/` — **métier pur, aucune I/O ni état** : `aggregation` → `price_engine` → `flow_engine` → `pipeline` → `assemble_dto`. Testable par **composition** (moteur sur REF, flux sur Subsidy).
+- `domain/aggregation/` est un **package** (comme `price_engine/`), pas un module fichier-plat.
+- `domain/errors.py` : DomainError (base) + InsufficientHistoryError (code=INSUFFICIENT_HISTORY).
+- `sync/errors.py` : SyncError, SyncApiError, SyncStructError, SyncGranularityError.
 - `sync/` — client CoinGecko keyless, dérivation des clôtures, réconciliation + interpolation, états `DEGRADED_*`.
 - Couche HTTP (Flask) — `GET`/`POST /api/params`, `GET /api/forecast` (sérialise `ForecastExportDTO`).
 - Couche données — SQLite (lecture/écriture clôtures mensuelles).
 - **Règle de dépendance :** `domain/` ne dépend de **rien** (ni Flask, ni SQLite, ni requests). Les couches externes dépendent de `domain/`, jamais l'inverse.
 - **Langue :** code / champs / routes / logs / libellés UI en **anglais** ; prose des specs et échanges en **français**.
+- **Sens des dépendances** : `domain/` est pur (aucun import de `storage/`, `sync/`, `web/`,
+  `requests`, `flask`, `sqlite3`). `storage/` PEUT importer `domain.models` (types de frontière
+  uniquement). `sync/` importe `storage/` et `domain.models`. Jamais l'inverse.
+  (Formulation incorrecte à éviter dans les briefs : « storage/ n'importe pas domain/ » —
+  la contrainte est dans l'autre sens.)
 
 ## Invariants critiques — NE JAMAIS CASSER
 - **Non-régression moteur (gate de tout merge touchant `price_engine`)** : `anchor_year=2025, anchor_price=101700, mm_anchor=0.361334851227728` → `nominal_price(2026..2072)` = `L37..L83` du pilote **au cent** (garde relative `1e-9`). ⚠️ `mm_anchor` DOIT être la valeur pleine précision du pilote (`Forecast Bear!C12`) ; `0.3613` est un arrondi d'affichage 4 décimales (écart ~3,5e-5 ≫ 1e-9) qui fait échouer les 5 années de blend. Contrôles : `arr_theo(2026)=0.210231258`, `nominal(2026)=123080.52`, `nominal(2072)≈2373743`.
