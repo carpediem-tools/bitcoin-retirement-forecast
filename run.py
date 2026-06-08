@@ -66,6 +66,52 @@ def main() -> None:
     # Idempotent schema init — creates forecast.db on first launch (ST7 §7).
     init_schema(config.db_path)
 
+    from pathlib import Path as _Path
+
+    from storage.db import seed_from_csv as _seed
+
+    _seed_csv = _Path(__file__).resolve().parent / "data" / "seed_monthly_closes.csv"
+    if _seed_csv.exists():
+        _n = _seed(config.db_path, _seed_csv)
+        if _n > 0:
+            log.info("Seed : %d clôtures historiques chargées", _n)
+        else:
+            log.debug("Seed : base déjà peuplée, skip")
+    else:
+        log.warning("Seed CSV introuvable (%s) — lancement sans historique", _seed_csv)
+
+    # Sync CoinGecko → SQLite (1 appel/lancement, mode dégradé si KO).
+    # SyncOrchestrator takes its collaborators (client/validator/deriver/
+    # reconciler/interpolator/meta_dao), not a db_path — wired here from a
+    # dedicated connection, closed before the app's per-request pool opens.
+    from storage.dao import AppMetaDAO, MonthlyCloseDAO
+    from storage.db import get_connection
+    from sync.client import CoinGeckoClient
+    from sync.deriver import MonthlyCloseDeriver
+    from sync.interpolator import Interpolator
+    from sync.orchestrator import SyncOrchestrator
+    from sync.reconciler import Reconciler
+    from sync.validator import ResponseValidator
+
+    log.info("Synchronisation des clôtures mensuelles…")
+    try:
+        conn = get_connection(config.db_path)
+        try:
+            dao = MonthlyCloseDAO(conn)
+            sync_result = SyncOrchestrator(
+                client=CoinGeckoClient(),
+                validator=ResponseValidator(),
+                deriver=MonthlyCloseDeriver(),
+                reconciler=Reconciler(dao),
+                interpolator=Interpolator(dao),
+                meta_dao=AppMetaDAO(conn),
+            ).run()
+            log.info("Sync terminée : %s", sync_result.sync_status)
+        finally:
+            conn.close()
+    except Exception as exc:
+        log.error("Sync échouée : %s — l'app démarre en mode dégradé", exc)
+
     app = create_app(config)
     server, port = create_server_with_fallback(app, config.host, config.port)
     url = f"http://{config.host}:{port}/"

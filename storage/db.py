@@ -6,7 +6,9 @@ re-run: every statement uses ``CREATE TABLE IF NOT EXISTS``.
 
 from __future__ import annotations
 
+import csv
 import sqlite3
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Verbatim DDL — ST7 §3.1. Do not edit without a schema_version bump.
@@ -43,5 +45,35 @@ def init_schema(db_path: Path | str) -> None:
     try:
         conn.executescript(SCHEMA_DDL)
         conn.commit()
+    finally:
+        conn.close()
+
+
+def seed_from_csv(db_path: Path | str, csv_path: Path | str) -> int:
+    """Load ``csv_path`` (header ``month,price``) into ``monthly_close``.
+
+    Uses ``INSERT OR IGNORE`` on the ``month`` primary key so existing rows
+    (notably ``origin='real'`` rows from sync) are never overwritten. All
+    seeded rows get ``origin='real'``. Returns the number of rows actually
+    inserted (net), not the number of rows processed.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    rows = []
+    with open(csv_path, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append((row["month"], float(row["price"]), "real", now))
+
+    conn = get_connection(db_path)
+    try:
+        before = conn.execute("SELECT COUNT(*) FROM monthly_close").fetchone()[0]
+        conn.executemany(
+            "INSERT OR IGNORE INTO monthly_close (month, price, origin, updated_at)"
+            " VALUES (?, ?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        after = conn.execute("SELECT COUNT(*) FROM monthly_close").fetchone()[0]
+        return after - before
     finally:
         conn.close()
