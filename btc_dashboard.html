@@ -274,6 +274,7 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 
 <script>
 let charts={}, allRows=[];
+let currentAnchorYear = null;
 
 function num(v){if(v==null||v===''||v==='nan') return null; const n=Number(v); return isNaN(n)?null:n;}
 function fmt$(v){return v!=null?'$'+Math.round(v).toLocaleString('fr-FR'):'—'}
@@ -309,6 +310,7 @@ function fetchForecast(){
 }
 
 function buildDashboard(data){
+  currentAnchorYear = data.params.anchor_year ?? null;
   const hist=data.series.filter(r=>r.kind==='historical');
   const proj=data.series.filter(r=>r.kind==='projection');
 
@@ -496,6 +498,12 @@ function openParamsModal() {
       document.getElementById('f-dca_growth_rate').value =
         p.dca_growth_rate != null ? +(p.dca_growth_rate * 100).toFixed(4) : '';
       document.getElementById('f-dca_end_year').value = p.dca_end_year ?? '';
+      if (currentAnchorYear !== null) {
+        document.getElementById('f-btc_spending_start_year').min =
+          currentAnchorYear + 1;
+        document.getElementById('f-dca_end_year').min =
+          currentAnchorYear;
+      }
       toggleDCA();
       document.getElementById('paramsError').style.display = 'none';
       document.getElementById('paramsModal').style.display = 'flex';
