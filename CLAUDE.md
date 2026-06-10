@@ -39,6 +39,13 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
   (Formulation incorrecte à éviter dans les briefs : « storage/ n'importe pas domain/ » —
   la contrainte est dans l'autre sens.)
 
+## Invariants web layer
+- `reference_price` n'est plus un paramètre utilisateur. Il est toujours
+  injecté depuis `MonthlyCloseDAO.get_last_close().price` dans web/app.py,
+  aussi bien sur GET /api/forecast que POST /api/params, avant exécution
+  du pipeline. Ne jamais laisser Pydantic le recevoir depuis le front.
+
+
 ## Invariants critiques — NE JAMAIS CASSER
 - **Non-régression moteur (gate de tout merge touchant `price_engine`)** : `anchor_year=2025, anchor_price=101700, mm_anchor=0.361334851227728` → `nominal_price(2026..2072)` = `L37..L83` du pilote **au cent** (garde relative `1e-9`). ⚠️ `mm_anchor` DOIT être la valeur pleine précision du pilote (`Forecast Bear!C12`) ; `0.3613` est un arrondi d'affichage 4 décimales (écart ~3,5e-5 ≫ 1e-9) qui fait échouer les 5 années de blend. Contrôles : `arr_theo(2026)=0.210231258`, `nominal(2026)=123080.52`, `nominal(2072)≈2373743`.
 - **Prix et taux en `float` (double IEEE-754).**
