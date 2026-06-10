@@ -408,6 +408,8 @@ function buildCharts(hist,proj,params){
   });
 
   // ARR
+  const arrPeak = Math.max(...proj.filter(r=>r.arr_theo!=null).map(r=>r.arr_theo*100));
+  const arrYMax = Math.ceil(arrPeak / 5) * 5 + 5;
   charts.arr=new Chart(document.getElementById('cArr'),{type:'line',
     data:{labels:projY,datasets:[
       {label:'ARR',data:proj.map(r=>r.arr_theo!=null?+(r.arr_theo*100).toFixed(2):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.06)',tension:0.4},
@@ -415,7 +417,7 @@ function buildCharts(hist,proj,params){
     ]},
     options:{...co,scales:{
       x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
-      y:{min:0,max:30,ticks:{color:'#555',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.04)'}}
+      y:{min:0,max:arrYMax,ticks:{color:'#555',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(255,255,255,.04)'}}
     }}
   });
 
