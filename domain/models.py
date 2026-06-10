@@ -129,7 +129,7 @@ class SeriesPoint:
     arr_reel: float | None       # arr_reel     (col C <- J) — historical
     arr_theo: float | None       # arr_theo     (col D <- K) — projection
     nominal_price: float         # prix_nominal (col E <- L)
-    real_price: float            # prix_reel    (col F <- M) = nominal x (1+inflation)^(anchor_year - year)
+    real_price: float | None     # prix_reel    (col F <- M) = nominal x (1+inflation)^(anchor_year - year)
     cdv_inflation: float | None  # cdv_inflation (col G <- N) — projection
     cdv_train: float | None      # cdv_train    (col H <- O) — projection
     btc_out: float | None        # dep_btc      (col I <- P) — projection

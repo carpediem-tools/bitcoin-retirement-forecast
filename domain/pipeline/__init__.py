@@ -64,8 +64,14 @@ class ForecastPipeline:
         flow_by_year = {f.year: f for f in flow.series}
         inflation = flow_params.inflation_rate
 
-        def real_price(nominal: float, year: int) -> float:
-            return nominal * (1 + inflation) ** (agg.anchor_year - year)
+        def real_price(nominal: float, year: int) -> float | None:
+            try:
+                result = nominal * (1 + inflation) ** (agg.anchor_year - year)
+            except (OverflowError, ZeroDivisionError):
+                return None
+            if not math.isfinite(result) or result > 1e12 or result < 1e-3:
+                return None
+            return result
 
         def nan_to_none(v: float) -> float | None:
             return None if math.isnan(v) else v

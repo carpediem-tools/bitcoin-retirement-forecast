@@ -10,11 +10,16 @@ boundary type already defined in ``domain.models`` — reused here, not redefine
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 from datetime import date
 
+from pydantic import ValidationError
+
 from config.params import FlowParams
 from domain.models import MonthlyClose
+
+logger = logging.getLogger(__name__)
 
 # Fallback profile served by ``load_raw``/used when ``forecast_params`` is empty
 # (first launch — ST7 §3.1: the table holds the single persisted profile).
@@ -167,8 +172,18 @@ class ForecastParamsDAO:
         default the user remains free to override (Flux KPI ``current_portfolio``,
         never the engine's ``anchor_price`` — ST8 §3.1, never merge the two).
         Falls back to ``0.0`` if the ``monthly_close`` table is itself empty.
+
+        A persisted profile that no longer validates against ``FlowParams``
+        (e.g. stored before a stricter constraint was introduced) is treated
+        as unset: logs a warning and falls back to ``DEFAULT_PARAMS`` too.
         """
         raw = self._load_rows()
+        if raw is not None:
+            try:
+                FlowParams(**raw)
+            except ValidationError:
+                logger.warning("invalid stored params, falling back to DEFAULT_PARAMS")
+                raw = None
         if raw is not None:
             return raw
         params = dict(DEFAULT_PARAMS)
