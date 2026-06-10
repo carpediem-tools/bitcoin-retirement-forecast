@@ -7,7 +7,7 @@ is left as a stub for the flow brief — no business logic is wired here yet.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
 
 class FlowParams(BaseModel):
@@ -24,12 +24,22 @@ class FlowParams(BaseModel):
     initial_stack: float = Field(ge=0)
     reference_price: float = Field(gt=0)       # KPI current_portfolio (≠ anchor_price)
     monthly_expenses: float = Field(gt=0)
-    inflation_rate: float = Field(ge=-1)
-    spending_growth_rate: float = Field(ge=-1)
+    inflation_rate: float
+    spending_growth_rate: float
     btc_spending_start_year: int
     monthly_dca: float = Field(default=0, ge=0)
     dca_growth_rate: float = Field(default=0, ge=-1)
     dca_end_year: int | None = None
+
+    @field_validator("inflation_rate", "spending_growth_rate")
+    @classmethod
+    def _validate_rate_floor(cls, value: float, info: ValidationInfo) -> float:
+        if value <= -1.0:
+            raise ValueError(
+                f"RATE_OUT_OF_RANGE: {info.field_name}={value} must be greater "
+                f"than -100% (minimum -99.99%)"
+            )
+        return value
 
     @model_validator(mode="after")
     def _validate_cross_fields(self, info: ValidationInfo) -> "FlowParams":
