@@ -44,6 +44,8 @@ Application Python **web-locale** : maintient une base SQLite de clôtures mensu
   injecté depuis `MonthlyCloseDAO.get_last_close().price` dans web/app.py,
   aussi bien sur GET /api/forecast que POST /api/params, avant exécution
   du pipeline. Ne jamais laisser Pydantic le recevoir depuis le front.
+- buildTable(hist, proj, params) : prend params en 3e argument depuis la session 10/06 — ne pas appeler sans params
+- currentAnchorYear : variable module-level dans btc_dashboard.html, alimentée par buildDashboard — seule source d'anchor_year accessible dans openParamsModal
 
 
 ## Invariants critiques — NE JAMAIS CASSER
