@@ -356,7 +356,7 @@ function buildDashboard(data){
   document.getElementById('p-port').textContent=fmt$(data.params.current_portfolio);
 
   buildCharts(hist,proj,data.params);
-  buildTable(hist,proj);
+  buildTable(hist,proj,data.params);
 
   document.getElementById('foot-date').textContent='Actualisé le '+new Date().toLocaleDateString('fr-FR');
   showScreen('dashboard');
@@ -395,11 +395,11 @@ function buildCharts(hist,proj,params){
   // STACK
   charts.stack=new Chart(document.getElementById('cStack'),{type:'line',
     data:{labels:projY,datasets:[
-      {label:'Stack BTC',data:proj.map(r=>r.stack),borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.3,yAxisID:'yB'},
+      {label:'Stack BTC',data:proj.map(r=>r.stack!=null?Math.max(0,r.stack):null),borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.3,yAxisID:'yB'},
       {label:'Portfolio',data:proj.map(r=>r.portfolio!=null?Math.max(0,r.portfolio):null),borderColor:'#5DBF8A',pointRadius:0,borderWidth:1.5,fill:true,backgroundColor:'rgba(93,191,138,.05)',tension:0.3,yAxisID:'yU',borderDash:[3,3]},
     ]},
     options:{...co,scales:{
-      yB:{position:'left',ticks:{color:'#C9A84C',font:{size:10},callback:v=>v.toFixed(2)+'₿'},grid:{color:'rgba(255,255,255,.04)'}},
+      yB:{position:'left',min:0,ticks:{color:'#C9A84C',font:{size:10},callback:v=>v.toFixed(2)+'₿'},grid:{color:'rgba(255,255,255,.04)'}},
       yU:{position:'right',ticks:{color:'#5DBF8A',font:{size:10},callback:v=>v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},grid:{display:false}},
       x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}
     }}
@@ -430,7 +430,7 @@ function buildCharts(hist,proj,params){
   });
 }
 
-function buildTable(hist,proj){
+function buildTable(hist,proj,params){
   allRows=[];
   const tbody=document.getElementById('tBody');
   tbody.innerHTML='';
@@ -439,7 +439,7 @@ function buildTable(hist,proj){
     if(r.year<2010) return;
     const tr=document.createElement('tr');
     tr.dataset.type='hist';
-    if(r.year===2025) tr.className='tr-curr';
+    if(r.year===(params.current_year-1)) tr.className='tr-curr';
     tr.innerHTML=`<td>${r.year}<span class="tag">●</span></td>
       <td class="dim">${r.n??'—'}</td>
       <td class="${r.arr_reel!=null?(r.arr_reel>0?'pos':'neg'):''}">${fmtp(r.arr_reel)}</td>
