@@ -97,7 +97,7 @@ def create_app(config: AppConfig | None = None) -> Flask:
             if not closes:
                 return jsonify({
                     "error": "NO_DATA",
-                    "message": "Base vide — lancer sync.",
+                    "message": "Empty database — run sync first.",
                 }), 503
 
             raw = ForecastParamsDAO(conn).load_raw()
@@ -205,7 +205,7 @@ def create_app(config: AppConfig | None = None) -> Flask:
                 )
             except ValidationError as exc:
                 # include_context=False : ctx.error embarque l'exception Python brute
-                # (ValueError des validators), non sérialisable en JSON par jsonify.
+                # (ValueError from validators), not JSON-serialisable by jsonify.
                 return jsonify({
                     "error": "PARAM_VALIDATION",
                     "detail": exc.errors(include_context=False),

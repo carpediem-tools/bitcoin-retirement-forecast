@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -114,13 +114,13 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 <div id="loadingScreen" class="screen">
   <div class="screen-logo">₿</div>
   <div class="screen-sub">Bitcoin Retirement · Bear Forecast Dashboard</div>
-  <div class="screen-msg">Chargement des données...</div>
+  <div class="screen-msg">Loading data...</div>
 </div>
 
 <div id="errorScreen" class="screen">
   <div class="screen-logo">₿</div>
   <div class="screen-msg err" id="errorMsg">—</div>
-  <button class="btn-retry" onclick="fetchForecast()">↻ Réessayer</button>
+  <button class="btn-retry" onclick="fetchForecast()">↻ Retry</button>
 </div>
 
 <div id="dashboard">
@@ -130,91 +130,91 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
     <div class="btc-circle">₿</div>
     <div class="hdr-title">
       <h1>Bitcoin Retirement Forecast</h1>
-      <p>Bear Scenario · Power Law · MM6 Dynamic · Sigmoïde</p>
+      <p>Bear Scenario · Power Law · MM4 Dynamic · Sigmoid</p>
     </div>
   </div>
   <div class="hdr-right">
     <span id="syncBadge" class="sync-badge unknown"><span class="dot"></span><span id="syncBadgeLabel">Sync —</span></span>
-    <button class="btn-reload" id="btnParams" onclick="openParamsModal()">⚙ Paramètres</button>
+    <button class="btn-reload" id="btnParams" onclick="openParamsModal()">⚙ Parameters</button>
   </div>
 </header>
 
 <div class="kpi-grid">
-  <div class="kpi gold"><label>ARR Théorique <span id="lbl-arr-year">2026</span></label><div class="v gold" id="k-arr">—</div><small>Bear modéré · PL −40%</small></div>
-  <div class="kpi amber"><label>MM anchor</label><div class="v amber" id="k-mm4">—</div><small>Moyenne mobile 6 ans</small></div>
-  <div class="kpi"><label>Last Monthly Close</label><div class="v white" id="k-prix">—</div><small id="lbl-prix-year">Référence nominale</small></div>
-  <div class="kpi green"><label>Stack actuel</label><div class="v green" id="k-stack">—</div><small>BTC en portefeuille</small></div>
-  <div class="kpi" id="kpi-runway"><label>Runway estimé</label><div class="v white" id="k-runway">—</div><small>Avant épuisement</small></div>
+  <div class="kpi gold"><label>Theoretical ARR <span id="lbl-arr-year">2026</span></label><div class="v gold" id="k-arr">—</div><small>Bear · PL −40%</small></div>
+  <div class="kpi amber"><label>MM anchor</label><div class="v amber" id="k-mm4">—</div><small>4-yr moving average</small></div>
+  <div class="kpi"><label>Last Monthly Close</label><div class="v white" id="k-prix">—</div><small id="lbl-prix-year">Nominal reference</small></div>
+  <div class="kpi green"><label>Current stack</label><div class="v green" id="k-stack">—</div><small>BTC in portfolio</small></div>
+  <div class="kpi" id="kpi-runway"><label>Estimated runway</label><div class="v white" id="k-runway">—</div><small>Until depletion</small></div>
 </div>
 
 <div class="params-bar">
-  <h3>Paramètres</h3>
-  <div class="param-item"><label>Année en cours</label><span id="p-year">—</span></div>
+  <h3>Parameters</h3>
+  <div class="param-item"><label>Projection start</label><span id="p-year">—</span></div>
   <div class="param-sep"></div>
-  <div class="param-item"><label>Dépenses / mois</label><span id="p-spend">—</span></div>
+  <div class="param-item"><label>Monthly expenses</label><span id="p-spend">—</span></div>
   <div class="param-item"><label>Inflation</label><span id="p-inf">—</span></div>
-  <div class="param-item"><label>Train de vie</label><span id="p-life">—</span></div>
+  <div class="param-item"><label>Lifestyle growth</label><span id="p-life">—</span></div>
   <div class="param-sep"></div>
-  <div class="param-item"><label>Plateau ARR</label><span id="p-plat">—</span></div>
-  <div class="param-item"><label>Année plateau</label><span id="p-plat-yr">—</span></div>
+  <div class="param-item"><label>ARR Plateau</label><span id="p-plat">—</span></div>
+  <div class="param-item"><label>Plateau year</label><span id="p-plat-yr">—</span></div>
   <div class="param-sep"></div>
-  <div class="param-item"><label>Portfolio actuel</label><span id="p-port">—</span></div>
+  <div class="param-item"><label>Current portfolio</label><span id="p-port">—</span></div>
 </div>
 
 <div class="charts-main">
   <div class="card">
-    <h3>Prix BTC <span>NOMINAL & RÉEL (LOG)</span></h3>
+    <h3>BTC Price <span>NOMINAL & REAL (LOG)</span></h3>
     <div class="chart-legend">
       <div class="leg-item"><div class="leg-dot" style="background:#C9A84C"></div>Nominal</div>
-      <div class="leg-item"><div class="leg-dash" style="border-color:#555"></div>Réel base 2025</div>
+      <div class="leg-item"><div class="leg-dash" style="border-color:#555"></div>Real (2025 base)</div>
     </div>
-    <div style="position:relative;height:300px"><canvas id="cPrice" role="img" aria-label="Prix Bitcoin nominal et réel"></canvas></div>
+    <div style="position:relative;height:300px"><canvas id="cPrice" role="img" aria-label="Bitcoin nominal and real price"></canvas></div>
   </div>
   <div class="card">
-    <h3>Stack BTC & Portfolio <span>2026–2072</span></h3>
+    <h3>BTC Stack & Portfolio <span>2026–2072</span></h3>
     <div class="chart-legend">
       <div class="leg-item"><div class="leg-dot" style="background:#C9A84C"></div>Stack BTC</div>
       <div class="leg-item"><div class="leg-dot" style="background:#5DBF8A"></div>Portfolio $</div>
     </div>
-    <div style="position:relative;height:300px"><canvas id="cStack" role="img" aria-label="Stack et portfolio"></canvas></div>
+    <div style="position:relative;height:300px"><canvas id="cStack" role="img" aria-label="BTC stack and portfolio"></canvas></div>
   </div>
 </div>
 
 <div class="chart-row">
   <div class="card">
-    <h3>ARR Théorique <span>DÉCROISSANCE BEAR</span></h3>
+    <h3>Theoretical ARR <span>BEAR DECLINE</span></h3>
     <div class="chart-legend">
-      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>ARR théo.</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>Theo. ARR</div>
       <div class="leg-item"><div class="leg-dash" style="border-color:#7A6228"></div>Plateau</div>
     </div>
-    <div style="position:relative;height:220px"><canvas id="cArr" role="img" aria-label="ARR théorique"></canvas></div>
+    <div style="position:relative;height:220px"><canvas id="cArr" role="img" aria-label="Theoretical ARR"></canvas></div>
   </div>
   <div class="card">
-    <h3>Coût de vie <span>INFLATION VS TRAIN DE VIE</span></h3>
+    <h3>Cost of living <span>INFLATION VS LIFESTYLE</span></h3>
     <div class="chart-legend">
       <div class="leg-item"><div class="leg-dot" style="background:#555"></div>Inflation</div>
-      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>Train de vie</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#E8943A"></div>Lifestyle</div>
     </div>
-    <div style="position:relative;height:220px"><canvas id="cCost" role="img" aria-label="Coût de vie"></canvas></div>
+    <div style="position:relative;height:220px"><canvas id="cCost" role="img" aria-label="Cost of living"></canvas></div>
   </div>
 </div>
 
 <div class="table-card">
   <div class="table-hdr">
-    <h3>Données complètes 2009 — 2072</h3>
+    <h3>Full data 2009 — 2072</h3>
     <div class="table-filter">
-      <button class="filter-btn active" onclick="filterTable('all',this)">Tout</button>
-      <button class="filter-btn" onclick="filterTable('hist',this)">Historique</button>
+      <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTable('hist',this)">Historical</button>
       <button class="filter-btn" onclick="filterTable('proj',this)">Projection</button>
     </div>
   </div>
   <div class="tbl-wrap">
     <table>
       <thead><tr>
-        <th>Année</th><th>N</th><th>ARR Réel</th><th>ARR Théo.</th>
-        <th>BTC Nominal</th><th>BTC Réel</th>
-        <th>Coût vie inf.</th><th>Coût vie train</th>
-        <th>Dép. BTC</th><th>Stack BTC</th><th>Portfolio</th>
+        <th>Year</th><th>N</th><th>Real ARR</th><th>Theo. ARR</th>
+        <th>Nominal BTC</th><th>Real BTC</th>
+        <th>Infl. cost</th><th>Lifestyle cost</th>
+        <th>BTC out</th><th>BTC Stack</th><th>Portfolio</th>
       </tr></thead>
       <tbody id="tBody"></tbody>
     </table>
@@ -222,7 +222,7 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 </div>
 
 <footer>
-  <span>Bear Scenario · Power Law 5.7675 · MM6 Dynamic · Sigmoïde plateau</span>
+  <span>Bear Scenario · Power Law 5.7675 · MM4 Dynamic · Sigmoid plateau</span>
   <span id="foot-date"></span>
 </footer>
 </div>
@@ -230,45 +230,45 @@ footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-con
 
 <div id="paramsModal" style="display:none">
   <div id="paramsPanel">
-    <h2>Paramètres de simulation</h2>
+    <h2>Simulation parameters</h2>
 
-    <!-- Colonne gauche : finances -->
-    <label>Stack BTC actuel
+    <!-- Left column: finances -->
+    <label>Current BTC stack
       <input type="number" id="f-initial_stack" step="0.0001" min="0">
     </label>
-    <label>Dépenses / mois ($)
+    <label>Monthly expenses ($)
       <input type="number" id="f-monthly_expenses" step="1" min="1">
     </label>
-    <label>Inflation / an (%)
+    <label>Annual inflation (%)
       <input type="number" id="f-inflation_rate" step="0.1" min="-99.99">
     </label>
-    <label>Train de vie / an (%)
+    <label>Lifestyle growth / yr (%)
       <input type="number" id="f-spending_growth_rate" step="0.1" min="-99.99">
     </label>
-    <label>Début des dépenses BTC (année)
+    <label>BTC spending start (year)
       <input type="number" id="f-btc_spending_start_year" step="1" min="2026" max="2072">
     </label>
 
-    <!-- Colonne droite : DCA optionnel -->
-    <label>DCA mensuel ($)
+    <!-- Right column: optional DCA -->
+    <label>Monthly DCA ($)
       <input type="number" id="f-monthly_dca" step="1" min="0"
              oninput="toggleDCA()">
     </label>
     <div id="dca-extra">
-      <label>Croissance DCA / an (%)
+      <label>DCA growth / yr (%)
         <input type="number" id="f-dca_growth_rate" step="0.1" min="-100">
       </label>
-      <label>Fin DCA (année)
+      <label>DCA end (year)
         <input type="number" id="f-dca_end_year" step="1" min="2026" max="2072">
       </label>
     </div>
 
-    <!-- Erreur -->
+    <!-- Error -->
     <div id="paramsError" style="display:none"></div>
 
     <!-- Actions -->
-    <button class="btn-retry" onclick="submitParams()">Sauvegarder</button>
-    <button class="btn-retry" onclick="closeParamsModal()">Annuler</button>
+    <button class="btn-retry" onclick="submitParams()">Save</button>
+    <button class="btn-retry" onclick="closeParamsModal()">Cancel</button>
   </div>
 </div>
 
@@ -277,7 +277,7 @@ let charts={}, allRows=[];
 let currentAnchorYear = null;
 
 function num(v){if(v==null||v===''||v==='nan') return null; const n=Number(v); return isNaN(n)?null:n;}
-function fmt$(v){return v!=null?'$'+Math.round(v).toLocaleString('fr-FR'):'—'}
+function fmt$(v){return v!=null?'$'+Math.round(v).toLocaleString('en-US'):'—'}
 function fmtp(v){return v!=null?(v*100).toFixed(2)+'%':'—'}
 function fmtb(v){return v!=null?v.toFixed(4):'—'}
 
@@ -306,7 +306,7 @@ function fetchForecast(){
       if(data.error){ showError(data.message||data.error); return; }
       buildDashboard(data);
     })
-    .catch(err=>showError('Erreur réseau : '+err));
+    .catch(err=>showError('Network error: '+err));
 }
 
 function buildDashboard(data){
@@ -315,16 +315,16 @@ function buildDashboard(data){
   const proj=data.series.filter(r=>r.kind==='projection');
 
   if(!data.params?.mm_anchor && proj.length===0){
-    showError('Données insuffisantes pour construire le dashboard.');
+    showError('Insufficient data to build the dashboard.');
     return;
   }
 
-  // Runway — vient directement de l'API (pas recalculé depuis la série)
+  // Runway — comes directly from the API (not recomputed from the series)
   const runVal=(data.params.runway==='Infinity')?Infinity:data.params.runway;
-  const runway=!isFinite(runVal)?'∞':runVal+' ans';
+  const runway=!isFinite(runVal)?'∞':runVal+' yr';
   const rc=!isFinite(runVal)?'green':runVal<10?'amber':'red';
 
-  // KPI labels — années dynamiques (ancre / année en cours)
+  // KPI labels — dynamic years (anchor / projection start)
   document.getElementById('lbl-arr-year').textContent=data.params.current_year??'—';
   document.getElementById('lbl-prix-year').textContent=data.params.last_close_date??'—';
 
@@ -350,7 +350,7 @@ function buildDashboard(data){
 
   // Params bar
   document.getElementById('p-year').textContent=data.params.current_year||'—';
-  document.getElementById('p-spend').textContent=data.params.monthly_expenses?'$'+data.params.monthly_expenses.toLocaleString('fr-FR'):'—';
+  document.getElementById('p-spend').textContent=data.params.monthly_expenses?'$'+data.params.monthly_expenses.toLocaleString('en-US'):'—';
   document.getElementById('p-inf').textContent=fmtp(data.params.inflation_rate);
   document.getElementById('p-life').textContent=fmtp(data.params.spending_growth_rate);
   document.getElementById('p-plat').textContent=fmtp(data.params.plateau_arr);
@@ -360,7 +360,7 @@ function buildDashboard(data){
   buildCharts(hist,proj,data.params);
   buildTable(hist,proj,data.params);
 
-  document.getElementById('foot-date').textContent='Actualisé le '+new Date().toLocaleDateString('fr-FR');
+  document.getElementById('foot-date').textContent='Updated '+new Date().toLocaleDateString('en-US');
   showScreen('dashboard');
 }
 
@@ -380,11 +380,11 @@ function buildCharts(hist,proj,params){
       titleFont:{family:'DM Mono',size:11},bodyFont:{family:'DM Mono',size:10}}},
     scales:{}};
 
-  // PRIX
+  // PRICE
   charts.price=new Chart(document.getElementById('cPrice'),{type:'line',
     data:{labels:allY,datasets:[
       {label:'Nominal',data:allNom,borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.2},
-      {label:'Réel',data:allReal,borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.2,borderDash:[5,4]},
+      {label:'Real',data:allReal,borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.2,borderDash:[5,4]},
     ]},
     options:{...co,scales:{
       x:{ticks:{maxTicksLimit:12,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
@@ -421,11 +421,11 @@ function buildCharts(hist,proj,params){
     }}
   });
 
-  // COÛT DE VIE
+  // COST OF LIVING
   charts.cost=new Chart(document.getElementById('cCost'),{type:'line',
     data:{labels:projY,datasets:[
-      {label:'Inflation',data:proj.map(r=>r.cdv_inflation!=null?Math.round(r.cdv_inflation):null),borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.3},
-      {label:'Train de vie',data:proj.map(r=>r.cdv_train!=null?Math.round(r.cdv_train):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.05)',tension:0.3},
+      {label:'Inflation',data:proj.map(r=>r.cost_inflation!=null?Math.round(r.cost_inflation):null),borderColor:'#555',pointRadius:0,borderWidth:1.5,fill:false,tension:0.3},
+      {label:'Lifestyle',data:proj.map(r=>r.cost_lifestyle!=null?Math.round(r.cost_lifestyle):null),borderColor:'#E8943A',pointRadius:0,borderWidth:2,fill:true,backgroundColor:'rgba(232,148,58,.05)',tension:0.3},
     ]},
     options:{...co,scales:{
       x:{ticks:{maxTicksLimit:10,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
@@ -446,7 +446,7 @@ function buildTable(hist,proj,params){
     if(r.year===(params.current_year-1)) tr.className='tr-curr';
     tr.innerHTML=`<td>${r.year}<span class="tag">●</span></td>
       <td class="dim">${r.n??'—'}</td>
-      <td class="${r.arr_reel!=null?(r.arr_reel>0?'pos':'neg'):''}">${fmtp(r.arr_reel)}</td>
+      <td class="${r.arr_real!=null?(r.arr_real>0?'pos':'neg'):''}">${fmtp(r.arr_real)}</td>
       <td class="dim">—</td>
       <td>${fmt$(r.nominal_price)}</td><td class="dim">${fmt$(r.real_price)}</td>
       <td class="dim">—</td><td class="dim">—</td>
@@ -463,8 +463,8 @@ function buildTable(hist,proj,params){
       <td class="dim">—</td>
       <td class="dim">${fmtp(r.arr_theo)}</td>
       <td>${fmt$(r.nominal_price)}</td><td class="dim">${fmt$(r.real_price)}</td>
-      <td class="dim">${fmt$(r.cdv_inflation)}</td>
-      <td>${fmt$(r.cdv_train)}</td>
+      <td class="dim">${fmt$(r.cost_inflation)}</td>
+      <td>${fmt$(r.cost_lifestyle)}</td>
       <td class="dim">${fmtb(r.btc_out)}</td>
       <td class="${pos?'pos':'neg'}">${fmtb(r.stack)}</td>
       <td class="${pos?'':'neg'}">${fmt$(r.portfolio)}</td>`;
@@ -478,18 +478,18 @@ function filterTable(type,btn){
   allRows.forEach(tr=>tr.style.display=(type==='all'||tr.dataset.type===type)?'':'none');
 }
 
-// Conversions % ↔ décimal (inflation, spending_growth, dca_growth)
-// Affichage : 0.06 → "6" ; Saisie : "6" → 0.06
+// % <-> decimal conversions (inflation, spending_growth, dca_growth)
+// Display: 0.06 -> "6" ; Input: "6" -> 0.06
 const PCT_FIELDS = ['inflation_rate','spending_growth_rate','dca_growth_rate'];
 
 function openParamsModal() {
   fetch('/api/params')
     .then(r => r.json())
     .then(p => {
-      // remplir les champs
+      // fill the fields
       document.getElementById('f-initial_stack').value = p.initial_stack ?? '';
       document.getElementById('f-monthly_expenses').value = p.monthly_expenses ?? '';
-      // % fields : multiplier × 100 pour affichage
+      // % fields: multiply by 100 for display
       document.getElementById('f-inflation_rate').value =
         p.inflation_rate != null ? +(p.inflation_rate * 100).toFixed(4) : '';
       document.getElementById('f-spending_growth_rate').value =
@@ -510,7 +510,7 @@ function openParamsModal() {
       document.getElementById('paramsError').style.display = 'none';
       document.getElementById('paramsModal').style.display = 'flex';
     })
-    .catch(err => alert('Impossible de charger les paramètres : ' + err));
+    .catch(err => alert('Failed to load parameters: ' + err));
 }
 
 function closeParamsModal() {
@@ -539,7 +539,7 @@ function submitParams() {
     dca_growth_rate:         pct('f-dca_growth_rate') ?? 0,
     dca_end_year:            dca > 0 ? int('f-dca_end_year') : null,
   };
-  // nettoyer les null non tolérés par le backend
+  // clean up nulls not tolerated by the backend
   Object.keys(body).forEach(k => { if (body[k] == null && k !== 'dca_end_year')
     body[k] = undefined; });
 
@@ -552,9 +552,9 @@ function submitParams() {
   .then(({ok, data}) => {
     if (ok) {
       closeParamsModal();
-      fetchForecast();       // rafraîchit tout le dashboard
+      fetchForecast();       // refreshes the whole dashboard
     } else {
-      // afficher l'erreur Pydantic ou message générique
+      // show the Pydantic error or a generic message
       const msg = data.detail
         ? data.detail.map(e => (e.loc?.length ? e.loc.slice(-1)[0] + ' : ' : '') + e.msg).join('\n')
         : (data.message || JSON.stringify(data));
@@ -565,12 +565,12 @@ function submitParams() {
   })
   .catch(err => {
     const el = document.getElementById('paramsError');
-    el.textContent = 'Erreur réseau : ' + err;
+    el.textContent = 'Network error: ' + err;
     el.style.display = 'block';
   });
 }
 
-// Fermer le modal en cliquant l'overlay (hors panel)
+// Close the modal by clicking the overlay (outside the panel)
 document.getElementById('paramsModal')
   ?.addEventListener('click', e => {
     if (e.target.id === 'paramsModal') closeParamsModal();

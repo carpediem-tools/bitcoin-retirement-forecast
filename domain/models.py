@@ -123,15 +123,15 @@ class ForecastParams:
 class SeriesPoint:
     """One row of the DTO ``series`` table — mirrors ``_Export`` rows 4-68 (ST8 §3.6)."""
 
-    year: int                    # année        (col A <- H)
+    year: int                    # year         (col A <- H)
     n: int                       # n            (col B <- I) = year - anchor_year
     kind: Literal["historical", "projection"]
-    arr_reel: float | None       # arr_reel     (col C <- J) — historical
+    arr_real: float | None       # arr_real     (col C <- J) — historical
     arr_theo: float | None       # arr_theo     (col D <- K) — projection
     nominal_price: float         # prix_nominal (col E <- L)
     real_price: float | None     # prix_reel    (col F <- M) = nominal x (1+inflation)^(anchor_year - year)
-    cdv_inflation: float | None  # cdv_inflation (col G <- N) — projection
-    cdv_train: float | None      # cdv_train    (col H <- O) — projection
+    cost_inflation: float | None  # cost_inflation (col G <- N) — projection
+    cost_lifestyle: float | None  # cost_lifestyle (col H <- O) — projection
     btc_out: float | None        # dep_btc      (col I <- P) — projection
     stack: float | None          # stack_btc    (col J <- Q) — projection
     portfolio: float | None      # portfolio    (col K <- R) — projection

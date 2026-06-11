@@ -82,7 +82,7 @@ def test_cas1_nan_to_none():
 
     assert point.year == 2024
     assert point.kind == "historical"
-    assert point.arr_reel is None
+    assert point.arr_real is None
     assert point.stack is None
 
 

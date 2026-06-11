@@ -80,7 +80,7 @@ def main() -> None:
     else:
         log.warning("Seed CSV introuvable (%s) — lancement sans historique", _seed_csv)
 
-    # Sync CoinGecko → SQLite (1 appel/lancement, mode dégradé si KO).
+    # Sync CoinGecko → SQLite (1 call/launch, degraded mode if KO).
     # SyncOrchestrator takes its collaborators (client/validator/deriver/
     # reconciler/interpolator/meta_dao), not a db_path — wired here from a
     # dedicated connection, closed before the app's per-request pool opens.
