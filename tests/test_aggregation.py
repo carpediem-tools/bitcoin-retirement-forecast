@@ -36,14 +36,14 @@ def _full_year_months(start: int, end: int):
 
 
 def _series(year_price=YEAR_PRICE, start=2018, end=2024) -> list[MonthlyClose]:
-    # Jan(start)..Dec(end) inclusive — contiguous. 2018..2024 = 84 months (W=6 floor).
+    # Jan(start)..Dec(end) inclusive — contiguous. 2018..2024 = 84 months (above W=4 floor of 60 months).
     return [
         MonthlyClose(date(y, m, 1), year_price[y], "real")
         for (y, m) in _full_year_months(start, end)
     ]
 
 
-def test_nominal_anchor_and_mm6():
+def test_nominal_anchor_and_mm4():
     result = Aggregator().aggregate(_series())
 
     # §4.4: anchor = last closed month (Dec 2024); anchor_price = rolling mean.
@@ -51,34 +51,34 @@ def test_nominal_anchor_and_mm6():
     assert result.anchor_price == pytest.approx(5765.76)
     assert result.rolling_annual_avg == pytest.approx(5765.76)
 
-    # §4.3: mm_anchor = mean of the six annual ARRs 0.10..0.60.
-    assert result.mm_anchor == pytest.approx(0.35)
+    # §4.3: mm_anchor = mean of the four annual ARRs 0.30..0.60.
+    assert result.mm_anchor == pytest.approx(0.45)
 
 
 def test_arr_series_is_W_nonoverlapping_annual():
     result = Aggregator().aggregate(_series())
 
     # Exactly MM_WINDOW_YEARS ARRs, oldest -> newest.
-    assert len(result.arr_series) == MM_WINDOW_YEARS == 6
+    assert len(result.arr_series) == MM_WINDOW_YEARS
     # Each value is a distinct calendar-year ratio: overlapping (e.g. monthly)
     # sampling could not reproduce the clean 0.10..0.60 ladder.
-    assert result.arr_series == pytest.approx((0.10, 0.20, 0.30, 0.40, 0.50, 0.60))
+    assert result.arr_series == pytest.approx((0.30, 0.40, 0.50, 0.60))
     # Oldest ARR sits 60 months (5 years) before the anchor's December — the
     # (W-1)*12 spacing of non-overlapping annual windows.
-    assert result.mm_window_start == date(2019, 12, 1)
+    assert result.mm_window_start == date(2021, 12, 1)
 
 
 def test_insufficient_history_raises():
-    # 83 closed months < 84 required for W=6 -> business error, no computation.
-    short = _series()[:-1]
-    assert len(short) == 83
+    # 59 closed months < 60 required for W=4 -> business error, no computation.
+    short = _series(end=2022)[:-1]
+    assert len(short) == 59
 
     with pytest.raises(InsufficientHistoryError) as exc:
         Aggregator().aggregate(short)
 
     assert exc.value.code == "INSUFFICIENT_HISTORY"
-    assert exc.value.required_months == 84
-    assert exc.value.available_months == 83
+    assert exc.value.required_months == 60
+    assert exc.value.available_months == 59
 
 
 def test_required_depth_is_derived_per_window():

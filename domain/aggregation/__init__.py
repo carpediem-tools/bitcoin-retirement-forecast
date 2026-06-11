@@ -23,7 +23,7 @@ from domain.models import AggregationResult, AnnualHistoryPoint, MonthlyClose
 # / domain.constants (the engine consumes the scalar mm_anchor and is window-
 # agnostic). Adjustable per release, never a user setting; sweepable {4, 6, 8}
 # in test via the Aggregator constructor.
-MM_WINDOW_YEARS = 6
+MM_WINDOW_YEARS = 4
 
 # Rolling window of the annual mean / ARR base (Agrégation §4.1/§4.2). Distinct
 # from MM_WINDOW_YEARS: this is the 12-month closed window, not the ARR count.
