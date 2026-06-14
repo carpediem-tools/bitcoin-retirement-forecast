@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>₿ User Guide — Retirement Forecast</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#C9A84C;--gold-dim:#7A6228;--gold-pale:#F5E49A;
+  --amber:#E8943A;--green:#5DBF8A;--red:#E05C5C;
+  --bg:#080808;--bg2:#0E0E0E;--bg3:#141414;--bg4:#1A1A1A;
+  --white:#F0EDE8;--grey:#777;--grey2:#444;--grey3:#222;
+}
+html{scroll-behavior:smooth}
+html,body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif}
+body{overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");opacity:.5}
+.page{max-width:1440px;margin:0 auto;padding:2rem 2.5rem}
+
+/* HEADER */
+header{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 0;border-bottom:1px solid var(--grey3);margin-bottom:2.5rem}
+.hdr-left{display:flex;align-items:center;gap:1.25rem}
+.btc-circle{width:46px;height:46px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold-pale);flex:none}
+.hdr-title h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:4px;color:var(--gold);line-height:1}
+.hdr-title p{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-top:.1rem}
+.btn-link{background:transparent;border:1px solid var(--grey2);color:var(--grey);padding:.5rem 1.25rem;font-size:.7rem;letter-spacing:1px;font-family:'DM Sans',sans-serif;text-transform:uppercase;text-decoration:none;display:inline-block;transition:all .2s}
+.btn-link:hover{border-color:var(--gold-dim);color:var(--gold)}
+
+/* LAYOUT */
+.guide-layout{display:grid;grid-template-columns:220px minmax(0,760px);gap:3rem;padding-bottom:1rem}
+.guide-nav{position:sticky;top:2rem;align-self:start;display:flex;flex-direction:column;gap:.65rem;padding-right:1.5rem;border-right:1px solid var(--grey3);height:fit-content}
+.nav-label{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dim);margin-bottom:.25rem}
+.guide-nav a{color:var(--grey);text-decoration:none;font-size:.78rem;letter-spacing:.5px;transition:color .2s}
+.guide-nav a:hover{color:var(--gold)}
+
+/* CONTENT */
+.guide-content section{margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid var(--grey3)}
+.guide-content section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.guide-content h2{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--gold);margin-bottom:1.1rem;scroll-margin-top:1.5rem}
+.guide-content p{font-size:.9rem;line-height:1.75;color:var(--white);margin-bottom:1rem}
+.guide-content p:last-child{margin-bottom:0}
+.guide-content ul{margin:0 0 1rem 1.25rem;display:flex;flex-direction:column;gap:.65rem}
+.guide-content ul:last-child{margin-bottom:0}
+.guide-content li{font-size:.9rem;line-height:1.7;color:var(--white)}
+.guide-content li::marker{color:var(--gold-dim)}
+.guide-content strong{color:var(--gold-pale);font-weight:500}
+.guide-content em{color:var(--amber);font-style:italic}
+.guide-content a{color:var(--amber);text-decoration:none;border-bottom:1px solid var(--gold-dim)}
+.guide-content a:hover{color:var(--gold-pale)}
+.pos{color:var(--green)!important;font-style:normal}
+.neg{color:var(--red)!important;font-style:normal}
+
+/* CODE */
+code{font-family:'DM Mono',monospace;color:var(--amber);background:var(--bg3);border:1px solid var(--grey3);padding:.05rem .4rem;border-radius:3px;font-size:.82em}
+pre{font-family:'DM Mono',monospace;background:var(--bg3);border:1px solid var(--grey3);border-radius:4px;padding:.9rem 1.1rem;color:var(--gold-pale);overflow-x:auto;margin:1rem 0;font-size:.85rem}
+pre code{background:none;border:none;padding:0;color:inherit}
+
+/* NOTE */
+blockquote.note{border-left:3px solid var(--gold);background:var(--bg2);padding:.85rem 1.25rem;margin:1.25rem 0 0;border-radius:0 4px 4px 0}
+blockquote.note p{margin-bottom:0;font-size:.85rem;line-height:1.7;color:var(--grey)}
+blockquote.note strong{color:var(--gold)}
+blockquote.note code{font-size:.8em}
+
+/* FOOTER */
+footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:var(--grey);letter-spacing:.5px}
+footer a{color:var(--grey);text-decoration:none;transition:color .2s}
+footer a:hover{color:var(--gold)}
+
+@media(max-width:860px){
+  .guide-layout{grid-template-columns:1fr}
+  .guide-nav{position:static;flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--grey3);padding:0 0 1rem}
+  .nav-label{display:none}
+  .guide-nav a{font-size:.7rem}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+<header>
+  <div class="hdr-left">
+    <div class="btc-circle">₿</div>
+    <div class="hdr-title">
+      <h1>User Guide</h1>
+      <p>Bitcoin Retirement Forecast</p>
+    </div>
+  </div>
+  <a class="btn-link" href="/">← Dashboard</a>
+</header>
+
+<div class="guide-layout">
+  <nav class="guide-nav">
+    <span class="nav-label">Contents</span>
+    <a href="#overview">1. Overview</a>
+    <a href="#getting-started">2. Getting started</a>
+    <a href="#header">3. Header</a>
+    <a href="#kpi-cards">4. KPI cards</a>
+    <a href="#params-bar">5. Parameters bar</a>
+    <a href="#charts">6. Charts</a>
+    <a href="#data-table">7. Data table</a>
+    <a href="#params-modal">8. Parameters modal</a>
+    <a href="#data-sources">9. Data sources</a>
+  </nav>
+
+  <main class="guide-content">
+
+    <section id="overview">
+      <h2>1. Overview</h2>
+      <p>Bitcoin Retirement Forecast is a local, single-user dashboard that projects whether
+      a Bitcoin stack can fund a retirement over the long term, under a deliberately
+      conservative ("Bear") price scenario. You enter your stack, spending, and optional
+      recurring purchases, and the app projects the trajectory year by year — including
+      the point, if any, where the stack would run out (the <em>runway</em>). It is an
+      educational modeling tool, not a price prediction or financial advice.</p>
+    </section>
+
+    <section id="getting-started">
+      <h2>2. Getting started</h2>
+      <p>Launch the app from the project directory:</p>
+      <pre><code>python run.py</code></pre>
+      <p>On first launch, the app creates a local database and loads it with a historical
+      seed of monthly BTC/USD closes (sourced from Coin Metrics — see
+      <a href="#data-sources">Data sources</a> below). On every launch, it then syncs the
+      most recent monthly closes from the CoinGecko public API (no account or API key
+      required) before opening a browser tab with the dashboard. If the sync fails, the
+      app continues to run on the data already stored locally.</p>
+    </section>
+
+    <section id="header">
+      <h2>3. Header</h2>
+      <p>The header shows the app title and two controls on the right:</p>
+      <ul>
+        <li><strong>Sync badge</strong> — a small dot and label indicating whether the
+        locally stored price history is current. It turns <strong>green ("Sync
+        OK")</strong> when the latest monthly close on file is the previous calendar
+        month, or — within the first few days of a new month — the month before that (a
+        short tolerance window that accounts for the new month's close not being
+        available yet). It turns <strong>red ("Sync KO")</strong> when the data looks
+        like it may be lagging. The badge is a simple data-freshness indicator: it does
+        not reflect network or connection status — if you need technical detail about a
+        sync attempt, check the application logs.</li>
+        <li><strong>⚙ Parameters button</strong> — opens the parameters modal, where you
+        can review and edit your simulation inputs (see
+        <a href="#params-modal">section 8</a>).</li>
+      </ul>
+    </section>
+
+    <section id="kpi-cards">
+      <h2>4. KPI cards</h2>
+      <p>A row of summary cards sits at the top of the dashboard:</p>
+      <ul>
+        <li><strong>ARR Théorique</strong> — the theoretical annual rate of return the
+        model projects for the upcoming year, under the Bear scenario's power-law
+        decay.</li>
+        <li><strong>MM anchor</strong> — the multi-year moving average of annual returns
+        used to anchor the projection's starting point (the bridge between observed
+        history and the projected curve).</li>
+        <li><strong>Last Monthly Close</strong> — the most recent monthly BTC/USD closing
+        price on file, with the corresponding month shown underneath. This is the
+        reference price used to value your current holdings.</li>
+        <li><strong>Stack actuel</strong> — your current Bitcoin holdings, in BTC, as
+        entered in the parameters.</li>
+        <li><strong>Runway estimé</strong> — the estimated number of years before the
+        stack would be exhausted at the projected spending and growth rates (or "∞" if it
+        is never exhausted within the projection horizon). The card's color reflects how
+        comfortable that runway looks.</li>
+      </ul>
+      <blockquote class="note">
+        <p><strong>Note:</strong> The "Last Monthly Close" KPI shows the most recent
+        stored monthly closing price (spot). The price engine uses
+        <code>anchor_price</code>, which is the rolling 12-month average of monthly
+        closes — a distinct value that smooths short-term volatility. These two figures
+        will generally differ, sometimes significantly.</p>
+      </blockquote>
+    </section>
+
+    <section id="params-bar">
+      <h2>5. Parameters bar</h2>
+      <p>Just below the KPI cards, a compact bar recaps the simulation inputs that are
+      currently active: the current year, monthly spending, inflation rate,
+      spending-growth ("train de vie") rate, the ARR plateau level and the year it is
+      reached, and the current portfolio value (stack valued at the last monthly close).
+      It gives you an at-a-glance summary of what the dashboard below is based on,
+      without opening the parameters modal.</p>
+      <blockquote class="note">
+        <p><strong>Note:</strong> "Projection start" displays <code>anchor_year +
+        1</code> — the first year for which a projected price is computed. For example,
+        if the current anchor year is 2026, the projection starts in 2027. This is not
+        the current calendar year; it is the first year beyond the last observed data
+        point.</p>
+      </blockquote>
+    </section>
+
+    <section id="charts">
+      <h2>6. Charts</h2>
+      <p>Four charts visualize the projection in detail:</p>
+      <ul>
+        <li><strong>Prix BTC — Nominal &amp; Réel</strong> — the projected Bitcoin price
+        over time, shown both in nominal terms and deflated to a fixed reference year's
+        purchasing power, on a logarithmic scale.</li>
+        <li><strong>Stack BTC &amp; Portfolio</strong> — how your Bitcoin stack (in BTC)
+        and its dollar value (the portfolio) evolve year by year as contributions and
+        withdrawals are applied.</li>
+        <li><strong>ARR Théorique — Décroissance Bear</strong> — the projected annual
+        rate of return declining over time toward its long-term plateau, illustrating the
+        Bear scenario's "maturing asset" assumption.</li>
+        <li><strong>Coût de vie — Inflation vs Train de vie</strong> — the projected cost
+        of living, comparing a pure-inflation trajectory against one that also compounds
+        an optional spending-growth ("lifestyle creep") rate.</li>
+      </ul>
+      <blockquote class="note">
+        <p><strong>Note:</strong> When the projected annual rate of return (ARR) falls
+        below the configured inflation rate — which occurs around 2042 under a 7%
+        inflation assumption — the real (inflation-adjusted) price begins to decline.
+        This is expected Bear behavior, not a model error. Setting inflation above the
+        long-term ARR plateau (3%) will always produce a declining real price in the
+        later projection years.</p>
+      </blockquote>
+    </section>
+
+    <section id="data-table">
+      <h2>7. Data table</h2>
+      <p>Below the charts, a full year-by-year table lists every row of the projection,
+      historical and projected alike.</p>
+      <ul>
+        <li><strong>Filters</strong> — three buttons let you switch the table's view
+        between <strong>All</strong>, <strong>Historical</strong> (observed past data)
+        and <strong>Projection</strong> (modeled future years).</li>
+        <li><strong>Columns</strong> — year, the year offset from the projection's
+        anchor, observed and theoretical annual returns, nominal and real
+        (inflation-adjusted) Bitcoin prices, the projected cost of living under inflation
+        alone and under inflation plus lifestyle growth, the Bitcoin amount spent or
+        contributed that year, the resulting stack size, and the resulting portfolio
+        value.</li>
+        <li><strong>Color coding</strong> — figures are shown in
+        <strong class="pos">green</strong> when they represent a positive position (e.g.
+        a positive return, or a stack/portfolio that remains above zero) and in
+        <strong class="neg">red</strong> when they represent a negative one (e.g. a
+        negative return, or a stack/portfolio that has gone to zero or below).</li>
+      </ul>
+    </section>
+
+    <section id="params-modal">
+      <h2>8. Parameters modal</h2>
+      <p>Opened from the ⚙ Parameters button, this form lets you adjust the inputs that
+      drive the projection:</p>
+      <ul>
+        <li>Current Bitcoin stack (in BTC)</li>
+        <li>Monthly expenses (in dollars)</li>
+        <li>Annual inflation rate (%)</li>
+        <li>Annual lifestyle/spending-growth rate (%)</li>
+        <li>The year your Bitcoin-funded spending begins</li>
+        <li>An optional monthly recurring purchase (DCA): its amount, its annual growth
+        rate, and the year it ends</li>
+      </ul>
+      <p>The reference price used to value your stack is no longer an editable field — it
+      is always taken automatically from the most recent monthly close on file, so it
+      stays consistent with the data shown elsewhere in the dashboard.</p>
+      <p>When you save, the form validates your entries (for example, percentages and
+      years must fall within sensible ranges, and inconsistent combinations are rejected
+      with an explanation). If validation fails, an error message explains what to
+      correct. On a successful save, the modal closes and the entire dashboard — KPIs,
+      charts, parameters bar and table — recalculates and refreshes automatically with
+      the new inputs.</p>
+    </section>
+
+    <section id="data-sources">
+      <h2>9. Data sources</h2>
+      <ul>
+        <li><strong>Recent prices</strong>: synced at every launch from the public
+        <strong>CoinGecko</strong> API (keyless — no account or API key needed). All
+        requests stay local to your machine; CoinGecko is the only external service the
+        app talks to.</li>
+        <li><strong>Historical seed</strong>: the long-term monthly close history is
+        seeded from <strong>Coin Metrics Community Data</strong>, distributed under a
+        Creative Commons license. Attribution to Coin Metrics is included in the
+        project's README.</li>
+      </ul>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <span>Bear Scenario · Power Law 5.7675 · MM4 Dynamic · Sigmoid plateau</span>
+  <a href="/">← Back to Dashboard</a>
+</footer>
+</div>
+
+</body>
+</html>

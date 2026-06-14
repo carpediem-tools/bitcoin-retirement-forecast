@@ -14,7 +14,7 @@ import dataclasses
 import math
 from pathlib import Path
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, send_from_directory
 from pydantic import ValidationError
 
 from config.app_config import AppConfig
@@ -87,6 +87,11 @@ def create_app(config: AppConfig | None = None) -> Flask:
     def index():
         """Serve the static dashboard front (ST7 §4.1)."""
         return send_file(DASHBOARD_FILE)
+
+    @app.get("/user-guide")
+    def user_guide():
+        """Serve the static HTML user guide (docs/USER_GUIDE.html)."""
+        return send_from_directory(PROJECT_ROOT / "docs", "USER_GUIDE.html")
 
     @app.get("/api/forecast")
     def get_forecast():
