@@ -2,6 +2,8 @@
 
 A local Python web app projecting a BTC retirement stack through 2072 under a conservative Bear scenario.
 
+![Dashboard](docs/assets/dashboard.png)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
