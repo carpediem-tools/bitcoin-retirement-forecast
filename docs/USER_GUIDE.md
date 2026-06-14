@@ -59,6 +59,12 @@ A row of summary cards sits at the top of the dashboard:
   exhausted within the projection horizon). The card's color reflects how
   comfortable that runway looks.
 
+> **Note:** The "Last Monthly Close" KPI shows the most recent stored
+> monthly closing price (spot). The price engine uses `anchor_price`,
+> which is the rolling 12-month average of monthly closes — a distinct
+> value that smooths short-term volatility. These two figures will
+> generally differ, sometimes significantly.
+
 ## 5. Parameters bar
 
 Just below the KPI cards, a compact bar recaps the simulation inputs that are
@@ -67,6 +73,12 @@ spending-growth ("train de vie") rate, the ARR plateau level and the year it is
 reached, and the current portfolio value (stack valued at the last monthly
 close). It gives you an at-a-glance summary of what the dashboard below is based
 on, without opening the parameters modal.
+
+> **Note:** "Projection start" displays `anchor_year + 1` — the first
+> year for which a projected price is computed. For example, if the
+> current anchor year is 2026, the projection starts in 2027. This is
+> not the current calendar year; it is the first year beyond the last
+> observed data point.
 
 ## 6. Charts
 
@@ -84,6 +96,13 @@ Four charts visualize the projection in detail:
 - **Coût de vie — Inflation vs Train de vie** — the projected cost of living,
   comparing a pure-inflation trajectory against one that also compounds an
   optional spending-growth ("lifestyle creep") rate.
+
+> **Note:** When the projected annual rate of return (ARR) falls below
+> the configured inflation rate — which occurs around 2042 under a 7%
+> inflation assumption — the real (inflation-adjusted) price begins to
+> decline. This is expected Bear behavior, not a model error. Setting
+> inflation above the long-term ARR plateau (3%) will always produce a
+> declining real price in the later projection years.
 
 ## 7. Data table
 
