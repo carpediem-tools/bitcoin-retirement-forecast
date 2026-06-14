@@ -1,62 +1,131 @@
-# bitcoin-retirement-bear
+# Bitcoin Retirement Forecast
 
-> Local web app modeling the viability of a Bitcoin-funded retirement under a conservative **Bear** scenario.
-> **Not financial advice. Not a price-prediction tool.**
+A local Python web app projecting a BTC retirement stack through 2072 under a conservative Bear scenario.
 
-A clone-and-run desktop web application that projects whether a Bitcoin stack can sustain a retirement, year by year, out to **2072** — under a deliberately conservative appreciation model. It runs entirely on your machine: your inputs never leave your computer.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## ⚠️ Disclaimer
+## Overview
 
-This is an **educational modeling tool**, not investment advice and not a forecast of Bitcoin's price. It projects *one* explicit, conservative scenario from assumptions you control. Real markets will diverge — likely a lot. Do not make financial decisions based on this output. Consult a qualified professional.
+Bitcoin Retirement Forecast is a single-user dashboard that models whether a
+Bitcoin stack can sustain a retirement over the long term, under a
+deliberately conservative ("Bear") price scenario. The projection runs from
+the present through 2072, combining a power-law price model anchored on a
+4-year moving average of recent annual returns with optional DCA
+accumulation and drawdown spending. The output includes an estimated
+retirement *runway* — the number of years before the stack would be
+exhausted, if ever. The dashboard also shows the available historical price
+record back to 2010 alongside the projection, so recent reality and the
+projected trajectory can be read side by side.
 
-## What it does
+---
 
-Given your starting stack, contributions, and spending, the app projects a single conservative trajectory and answers one question: **how long does the stack last?**
+## Features
 
-- **Bear scenario, not a bull pitch.** Most Bitcoin retirement calculators assume optimistic growth. This one applies a power-law appreciation model, discounted for a bearish view, converging toward a low long-term plateau.
-- **Runway as the headline number.** The model reports the first year the stack goes negative (the *runway*), and keeps projecting past it so you can see the full picture.
-- **Two independent cash-flow streams.** Optional **DCA** accumulation and **drawdown** spending can run in parallel, not just sequentially.
-- **Real purchasing power.** Living costs compound with inflation and an optional spending-growth rate; nominal results can be deflated to today's value.
-- **Local and private.** Monthly BTC/USD closes are stored in a local SQLite database (history since 2010). On launch the app syncs recent closes from the public CoinGecko API — **no API key required, ever**.
+- Bear price model: power-law decay with sigmoid convergence to a long-term
+  ARR plateau
+- MM4 anchor: projection seeded from a 4-year moving average of historical
+  annual returns
+- Monthly BTC/USD price sync via the CoinGecko public API (keyless)
+- Historical price seed (2010-07 onward) from Coin Metrics Community Data
+- Interactive dashboard: KPIs, charts, and a full year-by-year data table
+- Configurable simulation parameters (stack, expenses, inflation, DCA, ...)
+- Runs entirely locally — no accounts, no Docker, no cloud dependency
 
-## How the model works (high level)
+---
 
-1. **Aggregation** — derives the anchor (last real year/price) and a moving-average ARR from stored monthly closes.
-2. **Price engine** — projects a nominal yearly BTC price: power law → blend toward the anchor MM → bear discount → sigmoid convergence toward a fixed 3% plateau at 2055.
-3. **Flow engine** — applies DCA, drawdown, and inflation-compounded living costs to track the stack, portfolio value, and runway.
+## Prerequisites
 
-The price model uses fixed calendar rails (power-law time origin, sigmoid convergence) so that maturity is tied to real calendar time, not to when you happen to run the app. Integrity constants are not user-tunable; user inputs cover stack, contributions, spending, and rates only.
+- Python 3.13+
+- pip
 
-## Stack
+Nothing else is required: data is stored in a local SQLite database, and the
+app serves itself as a local web server.
 
-- **Python 3.13** · **Flask** (routes) + **waitress** (WSGI server)
-- **SQLite** (persisted monthly closes)
-- **Pydantic** (input validation) · **requests** (CoinGecko, keyless)
-- Frontend: single-page dashboard (Chart.js)
+---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/<your-handle>/btc-retirement-bear.git
-cd btc-retirement-bear
+git clone https://github.com/carpediem-tools/bitcoin-retirement-forecast
+cd bitcoin-retirement-forecast
 pip install -r requirements.txt
 python run.py
 ```
 
-`run.py` starts waitress on `http://127.0.0.1:8000` (falls back to 8001, 8002… if busy) and opens your browser once the server is listening. Single-user, localhost-only, no authentication.
-
-## Data & privacy
-
-All data — your inputs and the monthly-close database — stays on your machine. The only network call is a single keyless request to CoinGecko at launch to refresh recent closes. If that call fails, the app runs in a degraded sync state on existing local data.
-
-Historical data: Coin Metrics Community Data (CC license) github.com/coinmetrics/data
-
-## License
-
-[MIT](LICENSE)
+The app opens automatically at http://127.0.0.1:8000.
 
 ---
 
-*Suggested GitHub topics:* `bitcoin` · `retirement-calculator` · `retirement-planning` · `financial-modeling` · `power-law` · `python` · `flask` · `local-first`
+## First run
+
+On first launch, the app creates a local SQLite database and loads it with
+the historical price seed (2010-07 → 2026-05, from Coin Metrics). It then
+syncs the most recent monthly closes from CoinGecko, after which the
+dashboard is ready immediately. The sync badge in the header reflects the
+freshness of the stored price history ("Sync OK" / "Sync KO"); if a sync
+attempt fails, the app continues to run on the data already stored locally.
+On subsequent launches, only the CoinGecko sync step runs — the historical
+seed is loaded once and never re-fetched.
+
+---
+
+## Configuration
+
+The dashboard's parameters modal (⚙ Parameters) lets you adjust the inputs
+that drive the projection. See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for
+the full reference, including validation rules and a description of each
+chart and table column. Saved parameters persist in the local database and
+are reloaded automatically on the next launch. Main parameters:
+
+| Parameter                | Description                                         |
+|---------------------------|------------------------------------------------------|
+| Initial BTC stack          | Your current Bitcoin holdings, in BTC               |
+| Monthly expenses            | Baseline monthly spending, in dollars              |
+| Inflation rate               | Annual inflation rate (%)                         |
+| Lifestyle growth           | Additional annual spending-growth rate (%)          |
+| BTC spending start year      | The year your Bitcoin-funded spending begins       |
+| Monthly DCA                 | Optional recurring monthly BTC purchase, in dollars |
+
+---
+
+## Data sources
+
+This project relies on two external data sources, both keyless and free of
+charge.
+
+### CoinGecko
+
+Monthly BTC/USD closing prices via CoinGecko Public API (keyless, rolling
+365-day window). No API key required.
+
+https://www.coingecko.com
+
+### Coin Metrics
+
+Historical seed data (2010-07 → 2026-05) sourced from Coin Metrics Community
+Data, licensed under CC BY 4.0.
+
+https://coinmetrics.io/community-network-data/
+
+Attribution: Coin Metrics Community Data
+
+---
+
+## Model notes
+
+- The "Bear" scenario is a deliberately conservative framing, not a price
+  prediction.
+- The price model uses a power-law exponent of 5.7675 with a time origin of
+  2008.
+- The projection is anchored on MM4 — a 4-year moving average of historical
+  annual returns.
+- The annual rate of return converges, via a sigmoid, to a 3% plateau by
+  2055.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
