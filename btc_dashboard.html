@@ -364,6 +364,11 @@ function buildDashboard(data){
 
   document.getElementById('foot-date').textContent='Updated '+new Date().toLocaleDateString('en-US');
   showScreen('dashboard');
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      Object.values(charts).forEach(c=>c&&c.resize&&c.resize());
+    });
+  });
 }
 
 function buildCharts(hist,proj,params){
@@ -383,6 +388,14 @@ function buildCharts(hist,proj,params){
     scales:{}};
 
   // PRICE
+  const priceMax = Math.max(...allNom.filter(v=>v!=null), ...allReal.filter(v=>v!=null));
+  const priceYMax = (()=>{
+    const v = priceMax * 1.05;
+    const exp = Math.floor(Math.log10(v));
+    const base = v / Math.pow(10, exp);
+    const niceBase = base<=1?1:base<=2?2:base<=5?5:10;
+    return niceBase * Math.pow(10, exp);
+  })();
   charts.price=new Chart(document.getElementById('cPrice'),{type:'line',
     data:{labels:allY,datasets:[
       {label:'Nominal',data:allNom,borderColor:'#C9A84C',pointRadius:0,borderWidth:2,fill:false,tension:0.2},
@@ -390,7 +403,17 @@ function buildCharts(hist,proj,params){
     ]},
     options:{...co,scales:{
       x:{ticks:{maxTicksLimit:12,color:'#555',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
-      y:{type:'logarithmic',ticks:{color:'#555',font:{size:10},
+      y:{type:'logarithmic',max:priceYMax,
+         afterBuildTicks:axis=>{
+           const existing=axis.ticks.find(t=>t.value===priceYMax);
+           if(existing){
+             existing.major=true;
+           }else{
+             axis.ticks.push({value:priceYMax,major:true});
+             axis.ticks.sort((a,b)=>a.value-b.value);
+           }
+         },
+         ticks:{color:'#555',font:{size:10},
            callback:v=>v>=1e6?'$'+(v/1e6).toFixed(0)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'k':'$'+v},
          grid:{color:'rgba(255,255,255,.04)'}}
     }}
