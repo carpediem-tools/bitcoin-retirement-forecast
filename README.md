@@ -49,12 +49,33 @@ app serves itself as a local web server.
 
 ## Quick start
 
+### Linux / macOS
+
 ```bash
 git clone https://github.com/carpediem-tools/bitcoin-retirement-forecast
 cd bitcoin-retirement-forecast
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 python run.py
 ```
+
+For later runs, skip the install — just reactivate the environment and launch:
+`source venv/bin/activate && python run.py`
+
+### Windows
+
+```cmd
+git clone https://github.com/carpediem-tools/bitcoin-retirement-forecast
+cd bitcoin-retirement-forecast
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python run.py
+```
+
+For later runs, skip the install — just reactivate the environment and launch:
+`venv\Scripts\Activate.ps1; python run.py`
 
 The app opens automatically at http://127.0.0.1:8000.
 
