@@ -76,6 +76,9 @@ header{display:flex;justify-content:space-between;align-items:center;padding:1.5
 #dca-extra{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:1rem;transition:opacity .2s}
 #paramsError{grid-column:span 2;color:var(--red);font-size:.8rem}
 #paramsPanel button.btn-retry{grid-column:span 1;justify-self:start}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
 
 /* CHARTS */
 .charts-main{display:grid;grid-template-columns:3fr 2fr;gap:1.5rem;margin-bottom:1.5rem}
@@ -109,6 +112,7 @@ tr.tr-curr td:first-child{color:var(--gold)!important;font-weight:500}
 footer{border-top:1px solid var(--grey3);padding:1rem 0;display:flex;justify-content:space-between;font-size:.65rem;color:var(--grey);letter-spacing:.5px}
 footer a{color:var(--grey);text-decoration:none}
 footer a:hover{color:var(--gold)}
+footer a[href="/user-guide"]{color:var(--gold);font-size:.85rem}
 </style>
 </head>
 <body>
