@@ -61,7 +61,10 @@ python run.py
 ```
 
 For later runs, skip the install — just reactivate the environment and launch:
-`source venv/bin/activate && python run.py`
+
+```bash
+source venv/bin/activate && python run.py
+```
 
 ### Windows
 
@@ -75,7 +78,10 @@ python run.py
 ```
 
 For later runs, skip the install — just reactivate the environment and launch:
-`venv\Scripts\Activate.ps1; python run.py`
+
+```cmd
+venv\Scripts\Activate.ps1; python run.py
+```
 
 The app opens automatically at http://127.0.0.1:8000.
 
