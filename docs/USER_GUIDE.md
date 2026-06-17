@@ -44,20 +44,21 @@ The header shows the app title and two controls on the right:
 
 A row of summary cards sits at the top of the dashboard:
 
-- **ARR Théorique** — the theoretical annual rate of return the model projects
-  for the upcoming year, under the Bear scenario's power-law decay.
+- **Theoretical ARR** — the theoretical annual rate of return the model
+  projects for the upcoming year (the KPI label includes the year, e.g.
+  "Theoretical ARR 2027"), under the Bear scenario's power-law decay.
 - **MM anchor** — the multi-year moving average of annual returns used to anchor
   the projection's starting point (the bridge between observed history and the
   projected curve).
 - **Last Monthly Close** — the most recent monthly BTC/USD closing price on file,
   with the corresponding month shown underneath. This is the reference price used
   to value your current holdings.
-- **Stack actuel** — your current Bitcoin holdings, in BTC, as entered in the
-  parameters.
-- **Runway estimé** — the estimated number of years before the stack would be
-  exhausted at the projected spending and growth rates (or "∞" if it is never
-  exhausted within the projection horizon). The card's color reflects how
-  comfortable that runway looks.
+- **Current stack** — your current Bitcoin holdings, in BTC, as entered in
+  the parameters.
+- **Estimated runway** — the estimated number of years before the stack
+  would be exhausted at the projected spending and growth rates (or "∞" if
+  it is never exhausted within the projection horizon). The card's color
+  reflects how comfortable that runway looks.
 
 > **Note:** The "Last Monthly Close" KPI shows the most recent stored
 > monthly closing price (spot). The price engine uses `anchor_price`,
@@ -69,10 +70,10 @@ A row of summary cards sits at the top of the dashboard:
 
 Just below the KPI cards, a compact bar recaps the simulation inputs that are
 currently active: the current year, monthly spending, inflation rate,
-spending-growth ("train de vie") rate, the ARR plateau level and the year it is
-reached, and the current portfolio value (stack valued at the last monthly
-close). It gives you an at-a-glance summary of what the dashboard below is based
-on, without opening the parameters modal.
+lifestyle growth rate, the ARR plateau level and the year it is reached, and
+the current portfolio value (stack valued at the last monthly close). It
+gives you an at-a-glance summary of what the dashboard below is based on,
+without opening the parameters modal.
 
 > **Note:** "Projection start" displays `anchor_year + 1` — the first
 > year for which a projected price is computed. For example, if the
@@ -84,25 +85,43 @@ on, without opening the parameters modal.
 
 Four charts visualize the projection in detail:
 
-- **Prix BTC — Nominal & Réel** — the projected Bitcoin price over time, shown
-  both in nominal terms and deflated to a fixed reference year's purchasing
-  power, on a logarithmic scale.
-- **Stack BTC & Portfolio** — how your Bitcoin stack (in BTC) and its dollar
-  value (the portfolio) evolve year by year as contributions and withdrawals are
-  applied.
-- **ARR Théorique — Décroissance Bear** — the projected annual rate of return
+- **BTC Price — Nominal & Real** — the projected Bitcoin price over time,
+  shown both in nominal terms and deflated to a fixed reference year's
+  purchasing power, on a logarithmic scale.
+- **BTC Stack & Portfolio** — how your Bitcoin stack (in BTC) and its dollar
+  value (the portfolio) evolve year by year as contributions and withdrawals
+  are applied.
+- **Theoretical ARR — Bear Decline** — the projected annual rate of return
   declining over time toward its long-term plateau, illustrating the Bear
   scenario's "maturing asset" assumption.
-- **Coût de vie — Inflation vs Train de vie** — the projected cost of living,
+- **Cost of living — Inflation vs Lifestyle** — the projected cost of living,
   comparing a pure-inflation trajectory against one that also compounds an
   optional spending-growth ("lifestyle creep") rate.
 
-> **Note:** When the projected annual rate of return (ARR) falls below
-> the configured inflation rate — which occurs around 2042 under a 7%
-> inflation assumption — the real (inflation-adjusted) price begins to
-> decline. This is expected Bear behavior, not a model error. Setting
-> inflation above the long-term ARR plateau (3%) will always produce a
-> declining real price in the later projection years.
+> **Note:** The *nominal* price is the dollar figure the model
+> projects for a given year — no adjustment applied. The *real* price
+> re-expresses that same figure in constant purchasing power, using the
+> anchor year (the "base" year shown in the chart legend, which advances
+> as new data syncs in) as the reference point:
+>
+> `real_price(year) = nominal_price(year) / (1 + inflation_rate)^(year − anchor_year)`
+>
+> It answers "how much of today's purchasing power does this future price
+> represent?" rather than "what will the dollar amount be?"
+>
+> Whether the real price keeps rising or eventually declines depends
+> entirely on how the model's projected growth rate (ARR) compares to
+> your configured inflation rate. As long as the projected ARR stays
+> above inflation, the real price keeps climbing — more slowly than the
+> nominal price, but still climbing, because Bitcoin's modeled growth
+> keeps outpacing currency debasement. Once the projected ARR drops below
+> inflation — which happens around 2042 under a 7% inflation assumption,
+> as ARR continues converging toward its 3% long-term plateau — the real
+> price starts declining even while the nominal price keeps rising. This
+> is expected Bear behavior: it means Bitcoin's modeled growth no longer
+> compensates for inflation in that scenario, not a flaw in the model.
+> Setting an inflation rate above the long-term ARR plateau (3%) will
+> always produce a declining real price in the later projection years.
 
 ## 7. Data table
 
